@@ -114,6 +114,18 @@ export default function TrendingCoursesSection({ courses }: TrendingCoursesSecti
   );
 }
 
+// Generate a deterministic review count based on course ID
+function getReviewCount(courseId: string): number {
+  let hash = 0;
+  for (let i = 0; i < courseId.length; i++) {
+    const char = courseId.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  // Generate a number between 10000 and 500000 based on hash
+  return Math.abs(hash % 490000) + 10000;
+}
+
 function CourseCard({
   course,
   index,
@@ -124,9 +136,8 @@ function CourseCard({
   isVisible: boolean;
 }) {
   const thumbnailUrl = useConstructUrl(course.fileKey);
-  const [originalPrice] = useState(
-    Math.round(course.price * 1.5)
-  );
+  const originalPrice = Math.round(course.price * 1.5);
+  const reviewCount = getReviewCount(course.id);
 
   return (
     <div
@@ -176,7 +187,7 @@ function CourseCard({
               <span className="text-sm font-semibold">4.7</span>
             </div>
             <span className="text-sm text-muted-foreground">
-              ({Math.floor(Math.random() * 100000 + 10000)})
+              ({reviewCount.toLocaleString()})
             </span>
           </div>
 

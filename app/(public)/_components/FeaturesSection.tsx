@@ -67,7 +67,7 @@ export default function FeaturesSection() {
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3"
                   style={{
-                    background: `linear-gradient(135deg, #d37a61 0%, rgba(211, 122, 97, 0.7) 100%)`,
+                    background: `linear-gradient(135deg, #22d172 0%, rgba(34, 209, 114, 0.7) 100%)`,
                   }}
                 >
                   <span className="text-3xl">{feature.icon}</span>
@@ -87,8 +87,8 @@ export default function FeaturesSection() {
                 <div
                   className="absolute inset-0 rounded-2xl border-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                   style={{
-                    borderColor: "#d37a61",
-                    boxShadow: "0 0 0 4px rgba(211, 122, 97, 0.1)",
+                    borderColor: "#22d172",
+                    boxShadow: "0 0 0 4px rgba(34, 209, 114, 0.1)",
                   }}
                 />
 
@@ -97,7 +97,7 @@ export default function FeaturesSection() {
                   className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none -z-10 blur-xl"
                   style={{
                     background:
-                      "radial-gradient(circle at center, rgba(211, 122, 97, 0.2) 0%, transparent 70%)",
+                      "radial-gradient(circle at center, rgba(34, 209, 114, 0.2) 0%, transparent 70%)",
                   }}
                 />
               </div>

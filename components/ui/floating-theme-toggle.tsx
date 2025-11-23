@@ -38,7 +38,7 @@ export function FloatingThemeToggle() {
               variant="outline"
               size="icon"
               onClick={handleClick}
-              className={`group relative rounded-full w-14 h-14 border-2 border-border/50 bg-gradient-to-br from-background via-background to-muted/20 backdrop-blur-xl shadow-2xl hover:shadow-[0_0_30px_rgba(211,122,97,0.3)] transition-all duration-500 hover:scale-110 active:scale-90 hover:border-primary/60 overflow-hidden ${
+              className={`group relative rounded-full w-14 h-14 border-2 border-border/50 bg-gradient-to-br from-background via-background to-muted/20 backdrop-blur-xl shadow-2xl hover:shadow-[0_0_30px_rgba(34,209,114,0.3)] transition-all duration-500 hover:scale-110 active:scale-90 hover:border-primary/60 overflow-hidden ${
                 isActive ? "animate-pulse" : ""
               }`}
             >

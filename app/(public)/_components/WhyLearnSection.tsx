@@ -52,7 +52,7 @@ export default function WhyLearnSection() {
             className={`text-sm md:text-base font-semibold uppercase tracking-wider mb-4 transition-all duration-1000 ease-out ${
               isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             }`}
-            style={{ transitionDelay: "0.1s", color: "#d37a61" }}
+            style={{ transitionDelay: "0.1s", color: "#22d172" }}
           >
             WHY LEARN WITH US
           </p>
@@ -90,7 +90,7 @@ export default function WhyLearnSection() {
               <CardHeader>
                 <div 
                   className="w-16 h-16 rounded-lg flex items-center justify-center mb-4"
-                  style={{ backgroundColor: "#d37a61" }}
+                  style={{ backgroundColor: "#22d172" }}
                 >
                   <span className="text-white text-2xl font-bold">
                     {card.number}
