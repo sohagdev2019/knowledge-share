@@ -124,14 +124,6 @@ export function Navbar() {
                 </DropdownMenuContent>
               </div>
             </DropdownMenu>
-
-            {/* Pricing Link */}
-            <Link
-              href="#"
-              className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
-            >
-              Pricing
-            </Link>
           </div>
 
           <div className="flex items-center space-x-4 ml-6">
