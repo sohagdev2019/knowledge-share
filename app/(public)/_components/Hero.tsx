@@ -22,7 +22,7 @@ export default function Hero() {
         <div className="flex flex-col items-center text-center space-y-6 max-w-3xl mx-auto">
           {/* Main headline - two lines with staggered animation */}
           <div className="flex flex-col items-center space-y-1">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
               <span
                 className={`block text-primary transition-all duration-700 ease-out ${
                   isVisible
@@ -47,7 +47,7 @@ export default function Hero() {
 
             {/* Description text with fade-in animation */}
             <p
-              className={`max-w-[600px] text-white/90 text-sm md:text-base lg:text-lg mt-4 font-normal transition-all duration-700 ease-out ${
+              className={`max-w-[600px] text-white/90 text-base md:text-lg lg:text-xl mt-4 font-normal transition-all duration-700 ease-out ${
                 isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-4"
