@@ -17,7 +17,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative py-12 md:py-16 overflow-hidden" style={{ backgroundColor: '#1a2e44' }}>
+    <section className="relative py-12 md:py-16 overflow-hidden bg-background dark:bg-[#1a2e44] transition-colors duration-300">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex flex-col items-center text-center space-y-6 max-w-3xl mx-auto">
           {/* Main headline - two lines with staggered animation */}
@@ -34,7 +34,7 @@ export default function Hero() {
                 Master New Skills
               </span>
               <span
-                className={`block text-white transition-all duration-700 ease-out ${
+                className={`block text-slate-900 dark:text-white transition-all duration-700 ease-out ${
                   isVisible
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-6"
@@ -47,7 +47,7 @@ export default function Hero() {
 
             {/* Description text with fade-in animation */}
             <p
-              className={`max-w-[600px] text-white/90 text-base md:text-lg lg:text-xl mt-4 font-normal transition-all duration-700 ease-out ${
+              className={`max-w-[600px] text-slate-700 dark:text-white/90 text-base md:text-lg lg:text-xl mt-4 font-normal transition-all duration-700 ease-out ${
                 isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-4"
@@ -81,7 +81,7 @@ export default function Hero() {
 
             <Link
               href="/login"
-              className="group relative px-4 py-1.5 font-semibold text-sm text-white border border-white/80 bg-[#1A2B40] hover:text-primary hover:border-primary transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden"
+              className="group relative px-4 py-1.5 font-semibold text-sm text-slate-900 dark:text-white border border-slate-900/20 dark:border-white/80 bg-white dark:bg-[#1A2B40] hover:text-primary hover:border-primary transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden"
               style={{ borderRadius: '6px' }}
             >
               {/* Hover glow effect */}
@@ -92,7 +92,7 @@ export default function Hero() {
 
           {/* Feature highlights section */}
           <div
-            className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-8 pt-8 border-t border-white/10 w-full max-w-2xl transition-all duration-700 ease-out ${
+            className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-8 pt-8 border-t border-black/10 dark:border-white/10 w-full max-w-2xl transition-all duration-700 ease-out ${
               isVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-4"
@@ -103,32 +103,32 @@ export default function Hero() {
               <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors duration-300">
                 <Clock className="w-6 h-6 md:w-7 md:h-7 text-primary" />
               </div>
-              <div className="text-sm md:text-base font-semibold text-white">Learn at Your Pace</div>
-              <div className="text-xs md:text-sm text-white/60 mt-1">Flexible schedule</div>
+              <div className="text-sm md:text-base font-semibold text-slate-900 dark:text-white">Learn at Your Pace</div>
+              <div className="text-xs md:text-sm text-slate-600 dark:text-white/60 mt-1">Flexible schedule</div>
             </div>
             
             <div className="flex flex-col items-center text-center group">
               <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors duration-300">
                 <Users className="w-6 h-6 md:w-7 md:h-7 text-primary" />
               </div>
-              <div className="text-sm md:text-base font-semibold text-white">Expert Instructors</div>
-              <div className="text-xs md:text-sm text-white/60 mt-1">Industry professionals</div>
+              <div className="text-sm md:text-base font-semibold text-slate-900 dark:text-white">Expert Instructors</div>
+              <div className="text-xs md:text-sm text-slate-600 dark:text-white/60 mt-1">Industry professionals</div>
             </div>
             
             <div className="flex flex-col items-center text-center group">
               <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors duration-300">
                 <Award className="w-6 h-6 md:w-7 md:h-7 text-primary" />
               </div>
-              <div className="text-sm md:text-base font-semibold text-white">Certificates</div>
-              <div className="text-xs md:text-sm text-white/60 mt-1">Get certified</div>
+              <div className="text-sm md:text-base font-semibold text-slate-900 dark:text-white">Certificates</div>
+              <div className="text-xs md:text-sm text-slate-600 dark:text-white/60 mt-1">Get certified</div>
             </div>
             
             <div className="flex flex-col items-center text-center group">
               <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors duration-300">
                 <BookOpen className="w-6 h-6 md:w-7 md:h-7 text-primary" />
               </div>
-              <div className="text-sm md:text-base font-semibold text-white">500+ Courses</div>
-              <div className="text-xs md:text-sm text-white/60 mt-1">Wide selection</div>
+              <div className="text-sm md:text-base font-semibold text-slate-900 dark:text-white">500+ Courses</div>
+              <div className="text-xs md:text-sm text-slate-600 dark:text-white/60 mt-1">Wide selection</div>
             </div>
           </div>
         </div>
