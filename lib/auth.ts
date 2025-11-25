@@ -4,6 +4,7 @@ import { prisma } from "./db";
 import { env } from "./env";
 import { emailOTP } from "better-auth/plugins";
 import { getBrevoClient, SendSmtpEmail } from "./brevo";
+import { otpEmailTemplate } from "./email-templates";
 import { admin } from "better-auth/plugins";
 
 export const auth = betterAuth({
@@ -37,8 +38,8 @@ export const auth = betterAuth({
             throw new Error("BREVO_SENDER_EMAIL is required. Please set it in your environment variables with a verified sender email from your Brevo account.");
           }
           
-          sendSmtpEmail.subject = "KnowledgeShare - Verify your email";
-          sendSmtpEmail.htmlContent = `<p>Your OTP is <strong>${otp}</strong></p>`;
+          sendSmtpEmail.subject = "Your KnowledgeShare login code";
+          sendSmtpEmail.htmlContent = otpEmailTemplate({ otp });
           sendSmtpEmail.sender = { name: senderName, email: senderEmail };
           sendSmtpEmail.to = [{ email }];
           
