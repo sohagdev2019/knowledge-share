@@ -8,7 +8,9 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.string().url(),
     AUTH_GITHUB_CLIENT_ID: z.string().optional(),
     AUTH_GITHUB_SECRET: z.string().optional(),
-    RESEND_API_KEY: z.string().optional(),
+    BREVO_API_KEY: z.string().optional(),
+    BREVO_SENDER_EMAIL: z.string().email().optional(), // Required: Must be a verified sender email in Brevo
+    BREVO_SENDER_NAME: z.string().optional(),
     ARCJET_KEY: z.string().optional(),
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
