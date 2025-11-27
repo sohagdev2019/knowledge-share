@@ -36,6 +36,14 @@ export function NavUser() {
     return null;
   }
 
+  const sessionFirstName =
+    (session?.user as { firstName?: string } | undefined)?.firstName?.trim();
+  const userFirstName =
+    (sessionFirstName && sessionFirstName.length > 0
+      ? sessionFirstName
+      : undefined) || session?.user.email.split("@")[0];
+  const userInitial = userFirstName.charAt(0).toUpperCase();
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -51,19 +59,15 @@ export function NavUser() {
                     session?.user.image ??
                     `https://avatar.vercel.sh/${session?.user.email}`
                   }
-                  alt={session?.user.name}
+                  alt={userFirstName}
                 />
                 <AvatarFallback className="rounded-lg">
-                  {session?.user.name && session.user.name.length > 0
-                    ? session.user.name.charAt(0).toUpperCase()
-                    : session?.user.email.charAt(0).toUpperCase()}
+                  {userInitial}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
-                  {session?.user.name && session.user.name.length > 0
-                    ? session.user.name
-                    : session?.user.email.split("@")[0]}
+                  {userFirstName}
                 </span>
                 <span className="text-muted-foreground truncate text-xs">
                   {session?.user.email}
@@ -86,19 +90,15 @@ export function NavUser() {
                       session?.user.image ??
                       `https://avatar.vercel.sh/${session?.user.email}`
                     }
-                    alt={session?.user.name}
+                    alt={userFirstName}
                   />
                   <AvatarFallback className="rounded-lg">
-                    {session?.user.name && session.user.name.length > 0
-                      ? session.user.name.charAt(0).toUpperCase()
-                      : session?.user.email.charAt(0).toUpperCase()}
+                    {userInitial}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">
-                    {session?.user.name && session.user.name.length > 0
-                      ? session.user.name
-                      : session?.user.email.split("@")[0]}
+                    {userFirstName}
                   </span>
                   <span className="text-muted-foreground truncate text-xs">
                     {session?.user.email}

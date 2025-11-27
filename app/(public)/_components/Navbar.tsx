@@ -123,6 +123,8 @@ function NavDropdown({
 
 export function Navbar() {
   const { data: session, isPending } = authClient.useSession();
+  const sessionFirstName =
+    (session?.user as { firstName?: string } | undefined)?.firstName?.trim();
   
   // Filter navigation items based on auth status
   const visibleNavItems = navigationItems.filter(
@@ -167,9 +169,9 @@ export function Navbar() {
                   session?.user.image ??
                   `https://avatar.vercel.sh/${session?.user.email}`
                 }
-                name={
-                  session?.user.name && session.user.name.length > 0
-                    ? session.user.name
+                firstName={
+                  sessionFirstName && sessionFirstName.length > 0
+                    ? sessionFirstName
                     : session?.user.email.split("@")[0]
                 }
               />
@@ -190,7 +192,7 @@ export function Navbar() {
                   {/* Hover glow effect */}
                   <span className="absolute inset-0 rounded-md bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   {/* Shine effect on hover */}
-                  <span className="absolute inset-0 rounded-md bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <span className="absolute inset-0 rounded-md bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   <span className="relative z-10">Join</span>
                 </Link>
               </>

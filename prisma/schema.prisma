@@ -10,9 +10,13 @@ datasource db {
 
 model User {
   id             String           @id
-  name           String
+  firstName      String
+  lastName       String?
   email          String
   username       String?
+  phoneNumber    String?
+  designation    String?
+  bio            String?
   emailVerified  Boolean
   image          String?
   createdAt      DateTime

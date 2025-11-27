@@ -24,13 +24,15 @@ import Link from "next/link";
 import { useSignOut } from "@/hooks/use-singout";
 
 interface iAppProps {
-  name: string;
+  firstName: string;
   email: string;
   image: string;
 }
 
-export function UserDropdown({ email, name, image }: iAppProps) {
+export function UserDropdown({ email, firstName, image }: iAppProps) {
   const handleSignOut = useSignOut();
+  const displayName = firstName || email.split("@")[0];
+  const displayInitial = displayName.charAt(0).toUpperCase();
 
   return (
     <DropdownMenu>
@@ -38,7 +40,7 @@ export function UserDropdown({ email, name, image }: iAppProps) {
         <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
           <Avatar>
             <AvatarImage src={image} alt="Profile image" />
-            <AvatarFallback>{name[0].toUpperCase()}</AvatarFallback>
+            <AvatarFallback>{displayInitial}</AvatarFallback>
           </Avatar>
           <ChevronDownIcon
             size={16}
@@ -50,7 +52,7 @@ export function UserDropdown({ email, name, image }: iAppProps) {
       <DropdownMenuContent align="end" className="min-w-48 ">
         <DropdownMenuLabel className="flex min-w-0 flex-col">
           <span className="text-foreground truncate text-sm font-medium">
-            {name}
+            {displayName}
           </span>
           <span className="text-muted-foreground truncate text-xs font-normal">
             {email}

@@ -69,9 +69,13 @@ export async function enrollInCourseAction(
     if (userWithStripeCustomerId?.stripeCustomerId) {
       stripeCustomerId = userWithStripeCustomerId.stripeCustomerId;
     } else {
+      const stripeCustomerName =
+        [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
+        user.email.split("@")[0];
+
       const customer = await stripe.customers.create({
         email: user.email,
-        name: user.name,
+        name: stripeCustomerName,
         metadata: {
           userId: user.id,
         },

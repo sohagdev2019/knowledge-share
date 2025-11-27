@@ -118,14 +118,16 @@ export async function POST(req: NextRequest) {
 
     // Create user with admin role
     const userId = uuidv4();
-    const fullName = `${registrationData.firstName} ${registrationData.lastName}`;
+    const normalizedFirstName = registrationData.firstName.trim();
+    const normalizedLastName = registrationData.lastName.trim();
 
     await prisma.$transaction(async (tx) => {
       // Create user with admin role
       await tx.user.create({
         data: {
           id: userId,
-          name: fullName,
+          firstName: normalizedFirstName,
+          lastName: normalizedLastName.length ? normalizedLastName : null,
           email: normalizedEmail,
           username: registrationData.username,
           emailVerified: true, // Auto-verified via OTP
