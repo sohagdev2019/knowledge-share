@@ -12,6 +12,7 @@ model User {
   id             String           @id
   name           String
   email          String
+  username       String?
   emailVerified  Boolean
   image          String?
   createdAt      DateTime
@@ -30,6 +31,7 @@ model User {
   banExpires DateTime?
 
   @@unique([email])
+  @@unique([username])
   @@map("user")
 }
 

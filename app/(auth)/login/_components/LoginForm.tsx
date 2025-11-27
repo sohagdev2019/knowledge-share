@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 
-import { GithubIcon, Loader, Loader2, Send } from "lucide-react";
+import { GithubIcon, Loader, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -20,8 +20,9 @@ import { toast } from "sonner";
 export function LoginForm() {
   const router = useRouter();
   const [githubPending, startGithubTransition] = useTransition();
-  const [emailPending, startEmailTransition] = useTransition();
-  const [email, setEmail] = useState("");
+  const [passwordPending, startPasswordTransition] = useTransition();
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
 
   async function signInWithGithub() {
     startGithubTransition(async () => {
@@ -40,29 +41,45 @@ export function LoginForm() {
     });
   }
 
-  function signInWithEmail() {
-    startEmailTransition(async () => {
-      await authClient.emailOtp.sendVerificationOtp({
-        email: email,
-        type: "sign-in",
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Email sent");
-            router.push(`/verify-request?email=${email}`);
+  async function signInWithPassword() {
+    if (!identifier || !password) {
+      toast.error("Please enter username/email and password");
+      return;
+    }
+
+    startPasswordTransition(async () => {
+      try {
+        const response = await fetch("/api/auth/password/send-otp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-          onError: () => {
-            toast.error("Erorr sending email");
-          },
-        },
-      });
+          body: JSON.stringify({
+            identifier: identifier.trim(),
+            password: password,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.status === "success") {
+          toast.success(result.message);
+          router.push(`/verify-request?email=${result.email}&type=password`);
+        } else {
+          toast.error(result.message);
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred. Please try again.");
+        console.error("Password login error:", error);
+      }
     });
   }
   return (
     <Card>
-      <CardHeader>
+        <CardHeader>
         <CardTitle className="text-xl">Welcome Back!</CardTitle>
         <CardDescription>
-          Login with your Github or Email Account
+          Login with your GitHub account or username/password
         </CardDescription>
       </CardHeader>
 
@@ -92,28 +109,46 @@ export function LoginForm() {
           </span>
         </div>
 
+        {/* Password Login */}
         <div className="flex flex-col gap-3">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="identifier">Username or Email</Label>
             <Input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              placeholder="m@example.com"
+              id="identifier"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              type="text"
+              placeholder="username or email@example.com"
               required
             />
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              placeholder="••••••"
+              required
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  signInWithPassword();
+                }
+              }}
+            />
+          </div>
 
-          <Button onClick={signInWithEmail} disabled={emailPending}>
-            {emailPending ? (
+          <Button onClick={signInWithPassword} disabled={passwordPending}>
+            {passwordPending ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
                 <span>Loading...</span>
               </>
             ) : (
               <>
-                <Send className="size-4" />
-                <span>Continue with Email</span>
+                <Loader2 className="size-4" />
+                <span>Login with Password</span>
               </>
             )}
           </Button>

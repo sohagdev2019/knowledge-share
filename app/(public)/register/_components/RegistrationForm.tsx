@@ -63,7 +63,7 @@ export default function RegistrationForm() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/instructor-registration/send-otp", {
+      const response = await fetch("/api/student-registration/send-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -83,14 +83,14 @@ export default function RegistrationForm() {
         toast.success(result.message);
         // Store registration data in sessionStorage for verification page
         sessionStorage.setItem(
-          "instructorRegistration",
+          "studentRegistration",
           JSON.stringify({
             email: data.email.trim().toLowerCase(),
           })
         );
         // Redirect to verification page
         router.push(
-          `/instructor-registration/verify?email=${encodeURIComponent(data.email.trim().toLowerCase())}`
+          `/register/verify?email=${encodeURIComponent(data.email.trim().toLowerCase())}`
         );
       } else {
         toast.error(result.message);
@@ -137,7 +137,7 @@ export default function RegistrationForm() {
     <>
       <div className="flex w-full px-6 pt-4">
         <div className="flex-1 rounded-t-lg border border-border bg-primary/10 px-3 py-1.5 text-center text-xs font-semibold text-primary">
-          Tutor Instructor
+          Student Account
         </div>
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 px-6 pb-6 pt-4">
@@ -171,5 +171,4 @@ export default function RegistrationForm() {
     </>
   );
 }
-
 

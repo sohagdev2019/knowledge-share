@@ -33,23 +33,54 @@ function VerifyRequest() {
   const [emailPending, startTranstion] = useTransition();
   const params = useSearchParams();
   const email = params.get("email") as string;
+  const loginType = params.get("type") as string; // "password" or null (email OTP)
   const isOtpCompleted = otp.length === 6;
 
   function verifyOtp() {
     startTranstion(async () => {
-      await authClient.signIn.emailOtp({
-        email: email,
-        otp: otp,
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Email verified");
-            router.push("/");
+      // If password login, use password verify endpoint
+      if (loginType === "password") {
+        try {
+          const response = await fetch("/api/auth/password/verify", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              otp: otp,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.status === "success") {
+            toast.success("Login successful!");
+            // Reload the page to get the new session
+            window.location.href = "/";
+          } else {
+            toast.error(result.message);
+          }
+        } catch (error) {
+          toast.error("An unexpected error occurred. Please try again.");
+          console.error("Verification error:", error);
+        }
+      } else {
+        // Email OTP login
+        await authClient.signIn.emailOtp({
+          email: email,
+          otp: otp,
+          fetchOptions: {
+            onSuccess: () => {
+              toast.success("Email verified");
+              router.push("/");
+            },
+            onError: () => {
+              toast.error("Error verifying Email/OTP");
+            },
           },
-          onError: () => {
-            toast.error("Error verifying Email/OTP");
-          },
-        },
-      });
+        });
+      }
     });
   }
   return (
