@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ProfileForm } from "./_components/ProfileForm";
+import { PasswordForm } from "./_components/PasswordForm";
 
 export default async function SettingsPage() {
   const sessionUser = await requireUser();
@@ -85,45 +86,7 @@ export default async function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Reset Password</CardTitle>
-              <CardDescription>
-                Edit your account settings and change your password here.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
-                  <Input
-                    type="password"
-                    id="currentPassword"
-                    placeholder="Current password"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <Input
-                    type="password"
-                    id="newPassword"
-                    placeholder="New password"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Re-type New Password</Label>
-                  <Input
-                    type="password"
-                    id="confirmPassword"
-                    placeholder="Confirm new password"
-                  />
-                </div>
-                <Button type="button" variant="destructive">
-                  Reset Password
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          <PasswordForm />
         </TabsContent>
 
         <TabsContent value="social">
