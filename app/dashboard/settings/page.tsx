@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { ProfileForm } from "./_components/ProfileForm";
 import { PasswordForm } from "./_components/PasswordForm";
+import { SocialLinksForm } from "./_components/SocialLinksForm";
 
 export default async function SettingsPage() {
   const sessionUser = await requireUser();
@@ -90,32 +91,15 @@ export default async function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="social">
-          <Card>
-            <CardHeader>
-              <CardTitle>Social Profile Link</CardTitle>
-              <CardDescription>
-                Add your social profile links in below social accounts.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4">
-                {["Website", "Github", "Facebook", "Twitter", "LinkedIn"].map(
-                  (network) => (
-                    <div className="space-y-2" key={network}>
-                      <Label htmlFor={network.toLowerCase()}>{network}</Label>
-                      <Input
-                        id={network.toLowerCase()}
-                        placeholder={`https://example.com/${network.toLowerCase()}`}
-                      />
-                    </div>
-                  )
-                )}
-                <Button type="button" className="mt-2">
-                  Update Profile
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          <SocialLinksForm
+            initialData={{
+              website: dbUser?.socialWebsite ?? "",
+              github: dbUser?.socialGithub ?? "",
+              facebook: dbUser?.socialFacebook ?? "",
+              twitter: dbUser?.socialTwitter ?? "",
+              linkedin: dbUser?.socialLinkedin ?? "",
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="billing">

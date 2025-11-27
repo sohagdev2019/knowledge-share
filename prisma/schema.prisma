@@ -17,6 +17,11 @@ model User {
   phoneNumber    String?
   designation    String?
   bio            String?
+  socialWebsite   String?
+  socialGithub    String?
+  socialFacebook  String?
+  socialTwitter   String?
+  socialLinkedin  String?
   emailVerified  Boolean
   image          String?
   createdAt      DateTime

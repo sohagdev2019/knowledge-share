@@ -122,6 +122,10 @@ export type ProfileFormState =
   | { status: "idle" }
   | { status: "success"; message: string }
   | { status: "error"; message: string };
+export type SocialLinksFormState =
+  | { status: "idle" }
+  | { status: "success"; message: string }
+  | { status: "error"; message: string };
 
 const profileSchema = z.object({
   firstName: z
@@ -154,6 +158,34 @@ const profileSchema = z.object({
   bio: z
     .string()
     .max(600, "Bio must be 600 characters or fewer.")
+    .optional()
+    .or(z.literal("")),
+});
+
+const socialLinksSchema = z.object({
+  website: z
+    .string()
+    .url("Website must be a valid URL.")
+    .optional()
+    .or(z.literal("")),
+  github: z
+    .string()
+    .url("GitHub must be a valid URL.")
+    .optional()
+    .or(z.literal("")),
+  facebook: z
+    .string()
+    .url("Facebook must be a valid URL.")
+    .optional()
+    .or(z.literal("")),
+  twitter: z
+    .string()
+    .url("Twitter must be a valid URL.")
+    .optional()
+    .or(z.literal("")),
+  linkedin: z
+    .string()
+    .url("LinkedIn must be a valid URL.")
     .optional()
     .or(z.literal("")),
 });
@@ -221,6 +253,57 @@ export async function updateProfileAction(
     return {
       status: "error",
       message: "Failed to update profile. Please try again.",
+    };
+  }
+}
+
+export async function updateSocialLinksAction(
+  _prevState: SocialLinksFormState,
+  formData: FormData
+): Promise<SocialLinksFormState> {
+  const user = await requireUser();
+
+  const submission = {
+    website: formData.get("website")?.toString().trim() || "",
+    github: formData.get("github")?.toString().trim() || "",
+    facebook: formData.get("facebook")?.toString().trim() || "",
+    twitter: formData.get("twitter")?.toString().trim() || "",
+    linkedin: formData.get("linkedin")?.toString().trim() || "",
+  };
+
+  const parsed = socialLinksSchema.safeParse(submission);
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: parsed.error.issues[0]?.message ?? "Invalid social links.",
+    };
+  }
+
+  const clean = Object.fromEntries(
+    Object.entries(parsed.data).map(([key, value]) => [key, value || null])
+  ) as Record<string, string | null>;
+
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        socialWebsite: clean.website,
+        socialGithub: clean.github,
+        socialFacebook: clean.facebook,
+        socialTwitter: clean.twitter,
+        socialLinkedin: clean.linkedin,
+        updatedAt: new Date(),
+      },
+    });
+
+    revalidatePath("/dashboard/settings");
+    return { status: "success", message: "Social profiles updated." };
+  } catch (error) {
+    console.error("Failed to update social links", error);
+    return {
+      status: "error",
+      message: "Failed to update social profiles. Please try again.",
     };
   }
 }
