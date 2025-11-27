@@ -5,11 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { UserDropdown } from "./UserDropdown";
-
-const navigationItems = [
-  { name: "Courses", href: "/courses" },
-  { name: "Dashboard", href: "/dashboard", requireAuth: true },
-];
+import { getUserRole } from "./get-user-role";
 
 const resourcesItems = [
   { name: "Creator Stories", href: "#" },
@@ -123,17 +119,29 @@ function NavDropdown({
 
 export function Navbar() {
   const { data: session, isPending } = authClient.useSession();
+  const [userRole, setUserRole] = useState<string | null>(null);
   const sessionFirstName =
     (session?.user as { firstName?: string } | undefined)?.firstName?.trim();
   
-  // Filter navigation items based on auth status
-  const visibleNavItems = navigationItems.filter(
-    (item) => !item.requireAuth || session
-  );
+  // Fetch user role when session is available
+  useEffect(() => {
+    if (session) {
+      getUserRole().then(setUserRole);
+    } else {
+      setUserRole(null);
+    }
+  }, [session]);
 
+  // Determine dashboard href based on user role
+  const dashboardHref = userRole === "admin" ? "/admin/courses" : "/dashboard";
 
-
-  console.log("session", session, visibleNavItems);
+  // Filter navigation items based on auth status and update Dashboard href
+  const visibleNavItems: Array<{ name: string; href: string; requireAuth?: boolean }> = [
+    { name: "Courses", href: "/courses" },
+    ...(session
+      ? [{ name: "Dashboard", href: dashboardHref, requireAuth: true }]
+      : []),
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-[backdrop-filter]:bg-background/60">
@@ -174,6 +182,7 @@ export function Navbar() {
                     ? sessionFirstName
                     : session?.user.email.split("@")[0]
                 }
+                userRole={userRole}
               />
             ) : (
               <>

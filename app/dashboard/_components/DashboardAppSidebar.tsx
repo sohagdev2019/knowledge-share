@@ -31,34 +31,35 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
+const navMain = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: IconDashboard,
+  },
+  {
+    title: "My Profile",
+    url: "/dashboard/profile",
+    icon: IconUserCircle,
+  },
+  {
+    title: "Wishlist",
+    url: "/dashboard/wishlist",
+    icon: IconHeart,
+  },
+  {
+    title: "Reviews",
+    url: "/dashboard/reviews",
+    icon: IconStar,
+  },
+  {
+    title: "Order History",
+    url: "/dashboard/orders",
+    icon: IconReceipt,
+  },
+];
+
 const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "My Profile",
-      url: "/dashboard/profile",
-      icon: IconUserCircle,
-    },
-    {
-      title: "Wishlist",
-      url: "/dashboard/wishlist",
-      icon: IconHeart,
-    },
-    {
-      title: "Reviews",
-      url: "/dashboard/reviews",
-      icon: IconStar,
-    },
-    {
-      title: "Order History",
-      url: "/dashboard/orders",
-      icon: IconReceipt,
-    },
-  ],
   navClouds: [
     {
       title: "Capture",
@@ -126,7 +127,7 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -145,7 +146,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
 
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

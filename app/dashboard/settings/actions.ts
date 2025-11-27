@@ -97,6 +97,7 @@ export async function updatePasswordAction(
     });
 
     revalidatePath("/dashboard/settings");
+    revalidatePath("/admin/settings");
 
     return {
       status: "success",
@@ -252,6 +253,8 @@ export async function updateProfileAction(
 
     revalidatePath("/dashboard/settings");
     revalidatePath("/dashboard/profile");
+    revalidatePath("/admin/settings");
+    revalidatePath("/admin/profile");
 
     return {
       status: "success",
@@ -318,6 +321,7 @@ export async function updateSocialLinksAction(
     });
 
     revalidatePath("/dashboard/settings");
+    revalidatePath("/admin/settings");
     return { status: "success", message: "Social profiles updated." };
   } catch (error) {
     console.error("Failed to update social links", error);
@@ -384,6 +388,7 @@ export async function upsertBillingAddressAction(
     });
 
     revalidatePath("/dashboard/settings");
+    revalidatePath("/admin/settings");
     return {
       status: "success",
       message: "Billing address updated.",

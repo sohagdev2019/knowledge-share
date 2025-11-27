@@ -27,12 +27,30 @@ interface iAppProps {
   firstName: string;
   email: string;
   image: string;
+  userRole?: string | null;
 }
 
-export function UserDropdown({ email, firstName, image }: iAppProps) {
+export function UserDropdown({ email, firstName, image, userRole }: iAppProps) {
   const handleSignOut = useSignOut();
   const displayName = firstName || email.split("@")[0];
   const displayInitial = displayName.charAt(0).toUpperCase();
+
+  // Define menu items based on user role
+  const isAdmin = userRole === "admin";
+  
+  const menuItems = isAdmin
+    ? [
+        { icon: Home, label: "Home", href: "/" },
+        { icon: BookOpen, label: "Courses", href: "/admin/courses" },
+        { icon: LayoutDashboardIcon, label: "Dashboard", href: "/admin" },
+      ]
+    : [
+        { icon: Home, label: "Home", href: "/" },
+        { icon: BookOpen, label: "Courses", href: "/courses" },
+        { icon: LayoutDashboardIcon, label: "Dashboard", href: "/dashboard" },
+        { icon: UserRound, label: "Profile", href: "/dashboard/profile" },
+        { icon: UserRound, label: "Settings", href: "/dashboard/settings" },
+      ];
 
   return (
     <DropdownMenu>
@@ -60,34 +78,17 @@ export function UserDropdown({ email, firstName, image }: iAppProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/">
-              <Home size={16} className="opacity-60" aria-hidden="true" />
-              <span>Home</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/course">
-              <BookOpen size={16} className="opacity-60" aria-hidden="true" />
-              <span>Courses</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/settings/account">
-              <UserRound size={16} className="opacity-60" aria-hidden="true" />
-              <span>Accounts</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard">
-              <LayoutDashboardIcon
-                size={16}
-                className="opacity-60"
-                aria-hidden="true"
-              />
-              <span>Dashboard</span>
-            </Link>
-          </DropdownMenuItem>
+          {menuItems.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <DropdownMenuItem key={`${item.href}-${index}`} asChild>
+                <Link href={item.href}>
+                  <Icon size={16} className="opacity-60" aria-hidden="true" />
+                  <span>{item.label}</span>
+                </Link>
+              </DropdownMenuItem>
+            );
+          })}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
 

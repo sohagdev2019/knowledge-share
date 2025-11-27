@@ -13,6 +13,9 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconUserCircle,
+  IconHeart,
+  IconStar,
 } from "@tabler/icons-react";
 import Logo from "@/public/logo.png";
 
@@ -42,6 +45,21 @@ const data = {
       title: "Courses",
       url: "/admin/courses",
       icon: IconListDetails,
+    },
+    {
+      title: "My Profile",
+      url: "/admin/profile",
+      icon: IconUserCircle,
+    },
+    {
+      title: "Wishlist",
+      url: "/admin/wishlist",
+      icon: IconHeart,
+    },
+    {
+      title: "Reviews",
+      url: "/admin/reviews",
+      icon: IconStar,
     },
     {
       title: "Analytics",
@@ -110,7 +128,7 @@ const data = {
   navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/admin/settings",
       icon: IconSettings,
     },
     {
