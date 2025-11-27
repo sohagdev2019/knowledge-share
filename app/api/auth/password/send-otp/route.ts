@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       email: user.email,
       otp,
+      type: "password-login",
     };
 
     // Delete any existing verification for this email

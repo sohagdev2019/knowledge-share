@@ -16,7 +16,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState, useTransition } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 export default function VerifyRequestRoute() {
@@ -31,10 +31,46 @@ function VerifyRequest() {
   const router = useRouter();
   const [otp, setOtp] = useState("");
   const [emailPending, startTranstion] = useTransition();
+  const [resendPending, setResendPending] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const params = useSearchParams();
   const email = params.get("email") as string;
   const loginType = params.get("type") as string; // "password" or null (email OTP)
   const isOtpCompleted = otp.length === 6;
+
+  const startCountdown = useCallback(() => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+    setCountdown(60);
+    setCanResend(false);
+    countdownRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownRef.current) {
+            clearInterval(countdownRef.current);
+            countdownRef.current = null;
+          }
+          setCanResend(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    startCountdown();
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
+  }, [startCountdown]);
 
   function verifyOtp() {
     startTranstion(async () => {
@@ -83,6 +119,42 @@ function VerifyRequest() {
       }
     });
   }
+
+  async function resendOtp() {
+    if (!email || resendPending || !canResend) {
+      return;
+    }
+
+    setResendPending(true);
+    try {
+      if (loginType === "password") {
+        const response = await fetch("/api/auth/password/resend", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.status === "success") {
+          toast.success(result.message || "A new code has been sent.");
+          startCountdown();
+        } else {
+          toast.error(result.message || "Unable to resend the code right now.");
+        }
+      } else {
+        toast.info("Please restart the login flow to request a new email OTP.");
+      }
+    } catch (error) {
+      console.error("Resend OTP error:", error);
+      toast.error("Failed to resend the verification code. Please try again.");
+    } finally {
+      setResendPending(false);
+    }
+  }
+
   return (
     <Card className="w-full mx-auto">
       <CardHeader className="text-center">
@@ -114,6 +186,27 @@ function VerifyRequest() {
           <p className="text-sm text-muted-foreground">
             Enter the 6-digit code sent to your email
           </p>
+          <p className="text-xs text-muted-foreground">
+            {canResend
+              ? "Didn't receive a code? You can resend it now."
+              : `You can resend a code in ${countdown}s`}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8"
+            onClick={resendOtp}
+            disabled={!canResend || resendPending}
+          >
+            {resendPending ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" />
+                <span className="ml-2 text-sm">Sending...</span>
+              </>
+            ) : (
+              "Resend code"
+            )}
+          </Button>
         </div>
 
         <Button
