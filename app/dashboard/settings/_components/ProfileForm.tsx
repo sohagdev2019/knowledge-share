@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, type ReactNode } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { updateProfileAction, type ProfileFormState } from "../actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,10 +14,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { UploadIcon, Trash2, Sparkles } from "lucide-react";
+import { UploadIcon, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useFormStatus } from "react-dom";
 import { motion } from "framer-motion";
+import { useConstructUrl as constructFileUrl } from "@/hooks/use-construct-url";
 
 type ProfileFormProps = {
   initialData: {
@@ -30,6 +37,18 @@ const idleState: ProfileFormState = { status: "idle" };
 
 export function ProfileForm({ initialData }: ProfileFormProps) {
   const [state, formAction] = useActionState(updateProfileAction, idleState);
+  const [avatarValue, setAvatarValue] = useState(initialData.image ?? "");
+  const [avatarPreview, setAvatarPreview] = useState<string>(() => {
+    if (initialData.image) {
+      return initialData.image.startsWith("http")
+        ? initialData.image
+        : constructFileUrl(initialData.image);
+    }
+    return `https://avatar.vercel.sh/${initialData.email}`;
+  });
+  const [isUploading, setIsUploading] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (state.status === "success") {
@@ -40,12 +59,89 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
     }
   }, [state]);
 
-  const avatarSrc =
-    initialData.image ?? `https://avatar.vercel.sh/${initialData.email}`;
+  const baseFallback = `https://avatar.vercel.sh/${initialData.email}`;
+  const avatarSrc = avatarPreview || baseFallback;
   const avatarFallback =
     (initialData.firstName || initialData.username || initialData.email)
       .charAt(0)
       .toUpperCase();
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Please upload an image smaller than 5MB.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/s3/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error ?? "Failed to upload image");
+      }
+
+      const { key } = await response.json();
+      setAvatarValue(key);
+      setAvatarPreview(
+        key.startsWith("http") ? key : constructFileUrl(key)
+      );
+      toast.success("Profile image uploaded");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      toast.error(message);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!avatarValue) {
+      setAvatarValue("");
+      return;
+    }
+
+    setIsRemoving(true);
+    try {
+      if (!avatarValue.startsWith("http")) {
+        const response = await fetch("/api/s3/delete", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: avatarValue }),
+        });
+
+        if (!response.ok) {
+          const { error } = await response.json();
+          throw new Error(error ?? "Failed to remove image");
+        }
+      }
+
+      setAvatarValue("");
+      setAvatarPreview(baseFallback);
+      toast.success("Profile image removed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to remove image";
+      toast.error(message);
+    } finally {
+      setIsRemoving(false);
+    }
+  };
 
   return (
     <Card className="overflow-hidden border-none bg-gradient-to-br from-background/80 via-background to-background shadow-2xl shadow-primary/5">
@@ -77,12 +173,19 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <Avatar className="h-24 w-24 border-2 border-primary/40 shadow-lg shadow-primary/10">
+            <div className="relative">
+              <Avatar className="h-24 w-24 border-2 border-primary/40 shadow-lg shadow-primary/10">
               <AvatarImage src={avatarSrc} alt={initialData.firstName} />
               <AvatarFallback className="text-xl font-semibold">
                 {avatarFallback}
               </AvatarFallback>
             </Avatar>
+              {(isUploading || isRemoving) && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+                  <Loader2 className="h-6 w-6 animate-spin text-white" />
+                </div>
+              )}
+            </div>
           </motion.div>
           <div className="flex flex-1 flex-col gap-3">
             <p className="text-sm text-muted-foreground">
@@ -93,19 +196,38 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
                 type="button"
                 size="sm"
                 className="group gap-2 rounded-full border border-primary/20 bg-primary/10 text-primary transition hover:bg-primary hover:text-primary-foreground"
+                onClick={handleUploadClick}
+                disabled={isUploading}
               >
-                <UploadIcon className="h-4 w-4 transition group-hover:-translate-y-0.5" />
-                Upload
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UploadIcon className="h-4 w-4 transition group-hover:-translate-y-0.5" />
+                )}
+                {isUploading ? "Uploading..." : "Upload"}
               </Button>
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
                 className="gap-2 rounded-full border border-border/80 text-muted-foreground transition hover:border-destructive hover:text-destructive"
+                onClick={handleRemoveAvatar}
+                disabled={isUploading || isRemoving || (!avatarValue && !initialData.image)}
               >
-                <Trash2 className="h-4 w-4" />
+                {isRemoving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
                 Remove
               </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
             </div>
           </div>
         </div>
@@ -114,6 +236,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
           action={formAction}
           className="grid gap-8 rounded-2xl border border-border/50 bg-background/80 p-6 shadow-inner shadow-primary/5 backdrop-blur"
         >
+          <input type="hidden" name="image" value={avatarValue ?? ""} />
           <motion.div
             className="grid gap-4 md:grid-cols-2"
             initial={{ opacity: 0, y: 12 }}

@@ -165,6 +165,11 @@ const profileSchema = z.object({
     .max(600, "Bio must be 600 characters or fewer.")
     .optional()
     .or(z.literal("")),
+  image: z
+    .string()
+    .max(500, "Image reference is too long.")
+    .optional()
+    .or(z.literal("")),
 });
 
 const socialLinksSchema = z.object({
@@ -224,6 +229,7 @@ export async function updateProfileAction(
     phoneNumber: formData.get("phoneNumber"),
     designation: formData.get("designation"),
     bio: formData.get("bio"),
+    image: formData.get("image"),
   };
 
   const parsed = profileSchema.safeParse(submission);
@@ -236,6 +242,10 @@ export async function updateProfileAction(
   }
 
   const data = parsed.data;
+  let imageValue: string | null | undefined = undefined;
+  if (typeof data.image === "string") {
+    imageValue = data.image.trim() === "" ? null : data.image.trim();
+  }
 
   try {
     await prisma.user.update({
@@ -248,6 +258,7 @@ export async function updateProfileAction(
         designation: data.designation?.trim() ? data.designation.trim() : null,
         bio: data.bio?.trim() ? data.bio.trim() : null,
         updatedAt: new Date(),
+        ...(imageValue !== undefined && { image: imageValue }),
       },
     });
 

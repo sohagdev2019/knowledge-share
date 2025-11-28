@@ -26,6 +26,7 @@ import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { HomeIcon, Tv2 } from "lucide-react";
 import { useSignOut } from "@/hooks/use-singout";
+import { useConstructUrl as constructFileUrl } from "@/hooks/use-construct-url";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
@@ -43,6 +44,15 @@ export function NavUser() {
       ? sessionFirstName
       : undefined) || session?.user.email.split("@")[0];
   const userInitial = userFirstName.charAt(0).toUpperCase();
+  const resolveAvatar = () => {
+    if (session?.user.image) {
+      return session.user.image.startsWith("http")
+        ? session.user.image
+        : constructFileUrl(session.user.image);
+    }
+    return `https://avatar.vercel.sh/${session?.user.email}`;
+  };
+  const avatarUrl = resolveAvatar();
 
   return (
     <SidebarMenu>
@@ -54,11 +64,8 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg ">
-                <AvatarImage
-                  src={
-                    session?.user.image ??
-                    `https://avatar.vercel.sh/${session?.user.email}`
-                  }
+              <AvatarImage
+                  src={avatarUrl}
                   alt={userFirstName}
                 />
                 <AvatarFallback className="rounded-lg">
@@ -86,10 +93,7 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
-                    src={
-                      session?.user.image ??
-                      `https://avatar.vercel.sh/${session?.user.email}`
-                    }
+                    src={avatarUrl}
                     alt={userFirstName}
                   />
                   <AvatarFallback className="rounded-lg">

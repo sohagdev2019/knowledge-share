@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { UserDropdown } from "./UserDropdown";
 import { getUserRole } from "./get-user-role";
+import { useConstructUrl as constructFileUrl } from "@/hooks/use-construct-url";
 
 const resourcesItems = [
   { name: "Creator Stories", href: "#" },
@@ -174,8 +175,11 @@ export function Navbar() {
               <UserDropdown
                 email={session.user.email}
                 image={
-                  session?.user.image ??
-                  `https://avatar.vercel.sh/${session?.user.email}`
+                  session?.user.image
+                    ? session.user.image.startsWith("http")
+                      ? session.user.image
+                      : constructFileUrl(session.user.image)
+                    : `https://avatar.vercel.sh/${session?.user.email}`
                 }
                 firstName={
                   sessionFirstName && sessionFirstName.length > 0
