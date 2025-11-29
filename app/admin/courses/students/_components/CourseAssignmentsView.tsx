@@ -33,6 +33,7 @@ interface iAppProps {
 export function CourseAssignmentsView({ courseId }: iAppProps) {
   const [courseData, setCourseData] = useState<CourseAssignmentsType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
   const [selectedSubmission, setSelectedSubmission] = useState<{
@@ -49,19 +50,27 @@ export function CourseAssignmentsView({ courseId }: iAppProps) {
 
   const loadCourseData = async () => {
     setLoading(true);
+    setError(null);
     setExpandedChapters(new Set());
     setExpandedLessons(new Set());
 
     try {
       const response = await fetch(`/api/admin/courses/${courseId}/assignments`);
-      if (response.ok) {
-        const data = await response.json();
-        setCourseData(data);
-      } else {
-        console.error("Failed to fetch course assignments");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("Failed to fetch course assignments:", errorData);
+        const errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+        setError(errorMessage);
+        setCourseData(null);
+        return;
       }
+      const data = await response.json();
+      setCourseData(data);
+      setError(null);
     } catch (error) {
       console.error("Failed to fetch course assignments:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch course assignments");
+      setCourseData(null);
     } finally {
       setLoading(false);
     }
@@ -113,7 +122,16 @@ export function CourseAssignmentsView({ courseId }: iAppProps) {
         </div>
       )}
 
-      {!loading && courseData && (
+      {error && (
+        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+          <div className="text-destructive font-medium">{error}</div>
+          <Button onClick={loadCourseData} variant="outline">
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {!loading && !error && courseData && (
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
             <GraduationCap className="h-5 w-5 text-primary" />
