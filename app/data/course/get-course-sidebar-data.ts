@@ -149,6 +149,48 @@ export async function getCourseSidebarData(slug: string) {
     assignmentSubmissionMap.set(lesson.id, !!hasSubmission);
   });
 
+  // Get all lessons with quizzes and their submissions
+  const allLessonsWithQuizzes = await prisma.lesson.findMany({
+    where: {
+      Chapter: {
+        courseId: course.id,
+      },
+      quiz: {
+        isNot: null,
+      },
+    },
+    select: {
+      id: true,
+      quiz: {
+        select: {
+          id: true,
+          required: true,
+          submissions: {
+            where: { userId: session.id },
+            select: { score: true },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  // Create a map of lessons that have quizzes and whether they're completed (passed with >= 70% if required)
+  const quizCompletionMap = new Map<string, boolean>();
+  allLessonsWithQuizzes.forEach((lesson) => {
+    if (lesson.quiz) {
+      const hasSubmission = lesson.quiz.submissions && lesson.quiz.submissions.length > 0;
+      if (lesson.quiz.required) {
+        // Required quiz must be passed (score >= 70%)
+        const passed = hasSubmission && lesson.quiz.submissions[0].score >= 70;
+        quizCompletionMap.set(lesson.id, passed);
+      } else {
+        // Optional quiz just needs to be submitted
+        quizCompletionMap.set(lesson.id, hasSubmission);
+      }
+    }
+  });
+
   // Mark lessons as locked/unlocked based on previous lesson completion
   const courseWithLocks = {
     ...course,
@@ -165,7 +207,11 @@ export async function getCourseSidebarData(slug: string) {
             const assignmentSubmitted = hasAssignment 
               ? assignmentSubmissionMap.get(l.id) 
               : true; // If no assignment, consider it "submitted"
-            return isCompleted && (!hasAssignment || assignmentSubmitted);
+            const hasQuiz = quizCompletionMap.has(l.id);
+            const quizCompleted = hasQuiz 
+              ? quizCompletionMap.get(l.id) 
+              : true; // If no quiz, consider it "completed"
+            return isCompleted && (!hasAssignment || assignmentSubmitted) && (!hasQuiz || quizCompleted);
           });
           if (!allPrevLessonsCompleted) {
             previousChapterAllCompleted = false;
@@ -199,11 +245,16 @@ export async function getCourseSidebarData(slug: string) {
             const previousAssignmentSubmitted = previousHasAssignment 
               ? assignmentSubmissionMap.get(previousLesson.id) 
               : true; // If no assignment, consider it "submitted"
+            const previousHasQuiz = quizCompletionMap.has(previousLesson.id);
+            const previousQuizCompleted = previousHasQuiz 
+              ? quizCompletionMap.get(previousLesson.id) 
+              : true; // If no quiz, consider it "completed"
             
-            // Lesson is locked if previous is not completed OR if previous has assignment that's not submitted
+            // Lesson is locked if previous is not completed OR if previous has assignment that's not submitted OR if previous has quiz that's not completed
             progressionLocked =
               !isPreviousCompleted ||
-              (previousHasAssignment && !previousAssignmentSubmitted);
+              (previousHasAssignment && !previousAssignmentSubmitted) ||
+              (previousHasQuiz && !previousQuizCompleted);
           } else if (chapterIndex > 0) {
             // First lesson of a chapter - check if last lesson of previous chapter is completed AND assignment submitted
             const previousChapter = course.chapter[chapterIndex - 1];
@@ -223,10 +274,15 @@ export async function getCourseSidebarData(slug: string) {
               const lastLessonAssignmentSubmitted = lastLessonHasAssignment
                 ? assignmentSubmissionMap.get(lastLessonOfPrevChapter.id)
                 : true;
+              const lastLessonHasQuiz = quizCompletionMap.has(lastLessonOfPrevChapter.id);
+              const lastLessonQuizCompleted = lastLessonHasQuiz 
+                ? quizCompletionMap.get(lastLessonOfPrevChapter.id) 
+                : true;
 
               progressionLocked =
                 !isLastLessonCompleted ||
-                (lastLessonHasAssignment && !lastLessonAssignmentSubmitted);
+                (lastLessonHasAssignment && !lastLessonAssignmentSubmitted) ||
+                (lastLessonHasQuiz && !lastLessonQuizCompleted);
             }
           }
 

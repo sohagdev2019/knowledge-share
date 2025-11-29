@@ -91,6 +91,24 @@ export const assignmentSchema = z.object({
   dueDate: z.string().optional().or(z.literal("")),
 });
 
+export const quizQuestionSchema = z.object({
+  question: z.string().min(1, { message: "Question is required" }),
+  options: z.array(z.string().min(1, { message: "Option cannot be empty" })).min(2, { message: "At least 2 options required" }).max(10, { message: "Maximum 10 options allowed" }),
+  correctAnswer: z.coerce.number().min(0, { message: "Correct answer index is required" }),
+});
+
+export const quizSchema = z.object({
+  title: z.string().optional().or(z.literal("")),
+  points: z.coerce
+    .number()
+    .min(1, { message: "Points must be at least 1" })
+    .max(1000, { message: "Points must be at most 1000" })
+    .optional()
+    .default(10),
+  required: z.boolean().optional().default(true),
+  questions: z.array(quizQuestionSchema).min(1, { message: "At least one question is required" }),
+});
+
 export const lessonSchema = z.object({
   name: z
     .string()
@@ -105,6 +123,7 @@ export const lessonSchema = z.object({
   videoKey: z.string().optional(),
   thumbnailKey: z.string().optional(),
   assignment: assignmentSchema.optional(),
+  quiz: quizSchema.optional(),
   status: z
     .enum(lessonStatus)
     .optional()
@@ -133,3 +152,5 @@ export type ChapterSchemaType = z.infer<typeof chapterSchema>;
 export type LessonSchemaType = z.infer<typeof lessonSchema>;
 export type AssignmentSchemaType = z.infer<typeof assignmentSchema>;
 export type AssignmentSubmissionSchemaType = z.infer<typeof assignmentSubmissionSchema>;
+export type QuizSchemaType = z.infer<typeof quizSchema>;
+export type QuizQuestionSchemaType = z.infer<typeof quizQuestionSchema>;

@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { LessonCountdown } from "./LessonCountdown";
+import { QuizComponent } from "./QuizComponent";
 
 interface iAppProps {
   data: LessonContentType;
@@ -229,6 +230,9 @@ export function CourseContent({ data }: iAppProps) {
                 Next (Locked)
                 {data.assignmentRequired && (
                   <span className="text-xs ml-1">- Submit Assignment</span>
+                )}
+                {data.quizRequired && (
+                  <span className="text-xs ml-1">- Pass Quiz (70%+)</span>
                 )}
               </Button>
             ) : (
@@ -688,6 +692,15 @@ export function CourseContent({ data }: iAppProps) {
         </motion.div>
       )}
 
+      {data.quiz && (
+        <QuizComponent
+          quiz={data.quiz}
+          slug={data.Chapter.Course.slug}
+          userPoints={data.userPoints}
+          onComplete={() => window.location.reload()}
+        />
+      )}
+
       {/* Navigation Buttons at Bottom */}
       <div className="mt-8 pt-6 border-t">
         <div className="flex items-center justify-between gap-4">
@@ -723,6 +736,11 @@ export function CourseContent({ data }: iAppProps) {
                     {data.assignmentRequired && (
                       <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                         Submit assignment to unlock
+                      </div>
+                    )}
+                    {data.quizRequired && (
+                      <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                        Pass quiz (70%+) to unlock
                       </div>
                     )}
                   </div>

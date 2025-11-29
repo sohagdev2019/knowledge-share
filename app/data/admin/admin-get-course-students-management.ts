@@ -138,7 +138,7 @@ export async function adminGetCourseStudentsManagement(courseId: string) {
         },
       });
 
-      totalPoints = gradedSubmissions.reduce(
+      const assignmentPoints = gradedSubmissions.reduce(
         (sum, sub) => sum + (sub.grade || 0),
         0
       );
@@ -173,6 +173,91 @@ export async function adminGetCourseStudentsManagement(courseId: string) {
         return new Date(s.submittedAt) > new Date(s.Assignment.dueDate);
       }).length;
       const pendingCount = allSubmissions.filter((s) => s.status === "Pending").length;
+
+      // Get quiz analytics
+      const allQuizSubmissions = await prisma.quizSubmission.findMany({
+        where: {
+          userId: userId,
+          Quiz: {
+            Lesson: {
+              Chapter: {
+                courseId: courseId,
+              },
+            },
+          },
+        },
+        select: {
+          score: true,
+          totalQuestions: true,
+          correctAnswers: true,
+          pointsEarned: true,
+          submittedAt: true,
+          Quiz: {
+            select: {
+              id: true,
+              title: true,
+              points: true,
+              required: true,
+              Lesson: {
+                select: {
+                  id: true,
+                  title: true,
+                  position: true,
+                  Chapter: {
+                    select: {
+                      id: true,
+                      title: true,
+                      position: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const totalQuizzes = await prisma.quiz.count({
+        where: {
+          Lesson: {
+            Chapter: {
+              courseId: courseId,
+            },
+          },
+        },
+      });
+
+      const completedQuizzes = allQuizSubmissions.length;
+      const passedQuizzes = allQuizSubmissions.filter((q) => q.score >= 70).length;
+      const totalQuizPointsEarned = allQuizSubmissions.reduce((sum, q) => sum + q.pointsEarned, 0);
+      const averageQuizScore = completedQuizzes > 0
+        ? Math.round(allQuizSubmissions.reduce((sum, q) => sum + q.score, 0) / completedQuizzes)
+        : 0;
+
+      // Calculate total points (assignments + quizzes)
+      totalPoints = assignmentPoints + totalQuizPointsEarned;
+
+      // Get detailed quiz data for display
+      const quizzes = allQuizSubmissions.map((submission) => ({
+        quizId: submission.Quiz.id,
+        quizTitle: submission.Quiz.title,
+        quizPoints: submission.Quiz.points,
+        quizRequired: submission.Quiz.required,
+        lessonId: submission.Quiz.Lesson.id,
+        lessonTitle: submission.Quiz.Lesson.title,
+        chapterId: submission.Quiz.Lesson.Chapter.id,
+        chapterTitle: submission.Quiz.Lesson.Chapter.title,
+        chapterPosition: submission.Quiz.Lesson.Chapter.position,
+        lessonPosition: submission.Quiz.Lesson.position,
+        submission: {
+          id: submission.id,
+          score: submission.score,
+          totalQuestions: submission.totalQuestions,
+          correctAnswers: submission.correctAnswers,
+          pointsEarned: submission.pointsEarned,
+          submittedAt: submission.submittedAt,
+        },
+      }));
 
       const progressPercentage =
         totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
@@ -223,6 +308,20 @@ export async function adminGetCourseStudentsManagement(courseId: string) {
           pending: pendingCount,
           total: totalAssignments,
         },
+        quizStats: {
+          total: totalQuizzes,
+          completed: completedQuizzes,
+          passed: passedQuizzes,
+          totalPointsEarned: totalQuizPointsEarned,
+          averageScore: averageQuizScore,
+        },
+        quizzes: quizzes.sort((a, b) => {
+          // Sort by chapter position, then by lesson position
+          if (a.chapterPosition !== b.chapterPosition) {
+            return a.chapterPosition - b.chapterPosition;
+          }
+          return a.lessonPosition - b.lessonPosition;
+        }),
       };
     })
   );

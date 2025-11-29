@@ -78,6 +78,42 @@ export async function getLessonContent(lessonId: string) {
           },
         },
       },
+      quiz: {
+        select: {
+          id: true,
+          title: true,
+          points: true,
+          required: true,
+          questions: {
+            orderBy: {
+              position: "asc",
+            },
+            select: {
+              id: true,
+              question: true,
+              options: true,
+              position: true,
+            },
+          },
+          submissions: {
+            where: {
+              userId: session.id,
+            },
+            select: {
+              id: true,
+              score: true,
+              totalQuestions: true,
+              correctAnswers: true,
+              pointsEarned: true,
+              submittedAt: true,
+            },
+            take: 1,
+            orderBy: {
+              submittedAt: "desc",
+            },
+          },
+        },
+      },
     },
   });
 
@@ -110,7 +146,8 @@ export async function getLessonContent(lessonId: string) {
 
   // Only block Draft lessons/chapters
   // Scheduled/Published with future releaseAt should be accessible to show countdown
-  if (chapterScheduledLocked || lessonScheduledLocked) {
+  // BUT: Allow access if lesson is Published even if chapter is Draft (for flexibility)
+  if (lessonScheduledLocked || (chapterScheduledLocked && lesson.status !== "Published")) {
     return notFound();
   }
   
@@ -196,6 +233,14 @@ export async function getLessonContent(lessonId: string) {
   const assignmentSubmitted = lesson.assignment?.submissions && lesson.assignment.submissions.length > 0;
   const assignmentRequired = hasAssignment && !assignmentSubmitted;
 
+  // Check if current lesson has quiz and if it's completed (passed with >= 70% if required)
+  const hasQuiz = !!lesson.quiz;
+  const quizSubmitted = lesson.quiz?.submissions && lesson.quiz.submissions.length > 0;
+  const quizPassed = quizSubmitted && (lesson.quiz?.submissions[0]?.score ?? 0) >= 70;
+  // Only block if quiz is required AND not passed
+  // If quiz is optional (required = false), it won't block progression
+  const quizRequired = hasQuiz && lesson.quiz?.required && !quizPassed;
+
   // Check if current lesson is locked (previous lesson must be completed)
   let isCurrentLessonLocked = false;
   if (currentIndex > 0) {
@@ -222,19 +267,51 @@ export async function getLessonContent(lessonId: string) {
     const previousAssignmentSubmitted = previousLessonData?.assignment?.submissions && previousLessonData.assignment.submissions.length > 0;
     const previousAssignmentRequired = previousHasAssignment && !previousAssignmentSubmitted;
     
-    // Previous lesson must be completed AND if it has assignment, it must be submitted
-    isCurrentLessonLocked = !isPreviousCompleted || previousAssignmentRequired;
+    // Check previous lesson quiz
+    let previousHasQuiz = false;
+    let previousQuizRequired = false;
+    try {
+      const previousLessonQuiz = await prisma.lesson.findUnique({
+        where: { id: previousLesson.id },
+        select: {
+          quiz: {
+            select: {
+              required: true,
+              submissions: {
+                where: { userId: session.id },
+                select: { score: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      });
+      previousHasQuiz = !!previousLessonQuiz?.quiz;
+      const previousQuizSubmitted = previousLessonQuiz?.quiz?.submissions && previousLessonQuiz.quiz.submissions.length > 0;
+      const previousQuizPassed = previousQuizSubmitted && (previousLessonQuiz?.quiz?.submissions[0]?.score ?? 0) >= 70;
+      previousQuizRequired = previousHasQuiz && previousLessonQuiz?.quiz?.required && !previousQuizPassed;
+    } catch (error) {
+      // If quiz query fails, don't block access - just log the error
+      console.error("Error checking previous lesson quiz:", error);
+    }
+    
+    // Previous lesson must be completed AND if it has assignment, it must be submitted AND if it has required quiz, it must be passed
+    isCurrentLessonLocked = !isPreviousCompleted || previousAssignmentRequired || previousQuizRequired;
   }
 
   // Check if next lesson should be locked
   // Next lesson is locked if:
   // 1. Current lesson is not completed, OR
-  // 2. Current lesson has assignment and it's not submitted
-  const isNextLessonLocked = nextLesson ? (!isCurrentLessonCompleted || assignmentRequired) : false;
+  // 2. Current lesson has assignment and it's not submitted, OR
+  // 3. Current lesson has required quiz and it's not passed
+  const isNextLessonLocked = nextLesson ? (!isCurrentLessonCompleted || assignmentRequired || quizRequired) : false;
 
   // If current lesson is locked by progression, return not found (prevent access)
-  // BUT: if lesson is scheduled (Published/Scheduled with future releaseAt), allow access to show countdown
-  if (isCurrentLessonLocked && !isLessonScheduled) {
+  // BUT: allow access if:
+  // 1. Lesson is scheduled (Published/Scheduled with future releaseAt) - to show countdown
+  // 2. Current lesson has a quiz that needs to be taken - user should be able to access to take the quiz
+  const canAccessForQuiz = hasQuiz && quizRequired; // Allow access if lesson has a required quiz that needs to be taken
+  if (isCurrentLessonLocked && !isLessonScheduled && !canAccessForQuiz) {
     return notFound();
   }
 
@@ -255,6 +332,7 @@ export async function getLessonContent(lessonId: string) {
       : null,
     isCurrentLessonCompleted,
     assignmentRequired,
+    quizRequired,
     userPoints: user?.points || 0,
     isScheduled: isLessonScheduled,
     isEarlyUnlocked: !!earlyUnlock?.lessonId,

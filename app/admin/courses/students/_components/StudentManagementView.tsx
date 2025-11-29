@@ -100,6 +100,33 @@ interface StudentData {
     pending: number;
     total: number;
   };
+  quizStats?: {
+    total: number;
+    completed: number;
+    passed: number;
+    totalPointsEarned: number;
+    averageScore: number;
+  };
+  quizzes?: Array<{
+    quizId: string;
+    quizTitle: string | null;
+    quizPoints: number;
+    quizRequired: boolean;
+    lessonId: string;
+    lessonTitle: string;
+    chapterId: string;
+    chapterTitle: string;
+    chapterPosition: number;
+    lessonPosition: number;
+    submission: {
+      id: string;
+      score: number;
+      totalQuestions: number;
+      correctAnswers: number;
+      pointsEarned: number;
+      submittedAt: Date;
+    } | null;
+  }>;
 }
 
 export function StudentManagementView({ courseId }: iAppProps) {
@@ -289,6 +316,7 @@ export function StudentManagementView({ courseId }: iAppProps) {
                     <TableHead>Progress</TableHead>
                     <TableHead>Points</TableHead>
                     <TableHead>Assignments</TableHead>
+                    <TableHead>Quizzes</TableHead>
                     <TableHead>Badges</TableHead>
                     <TableHead>Certificate</TableHead>
                     <TableHead>Login Info</TableHead>
@@ -359,6 +387,29 @@ export function StudentManagementView({ courseId }: iAppProps) {
                             total={student.assignmentStats.total}
                             loading={loading}
                           />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">N/A</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {student.quizStats ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Trophy className="h-4 w-4 text-primary" />
+                              <span className="font-medium">
+                                {student.quizStats.completed}/{student.quizStats.total}
+                              </span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {student.quizStats.passed} passed
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Avg: {student.quizStats.averageScore}%
+                            </div>
+                            <div className="text-xs text-primary font-medium">
+                              +{student.quizStats.totalPointsEarned} pts
+                            </div>
+                          </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">N/A</span>
                         )}

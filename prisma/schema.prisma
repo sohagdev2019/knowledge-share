@@ -33,6 +33,7 @@ model User {
   banExpires            DateTime?
   points                Int                    @default(0)
   assignmentSubmissions AssignmentSubmission[]
+  quizSubmissions       QuizSubmission[]
   billingAddress        BillingAddress?
   courses               Course[]
   earlyUnlocks          EarlyUnlock[]
@@ -156,6 +157,7 @@ model Lesson {
   updatedAt      DateTime         @updatedAt
   chapterId      String
   assignment     Assignment?
+  quiz           Quiz?
   Chapter        Chapter          @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   lessonProgress LessonProgress[]
   earlyUnlocks   EarlyUnlock[]
@@ -286,6 +288,50 @@ model AssignmentSubmission {
   User            User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, assignmentId])
+}
+
+model Quiz {
+  id          String           @id @default(uuid())
+  title       String?
+  points      Int              @default(10)
+  required    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  lessonId    String           @unique
+  Lesson      Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions   QuizQuestion[]
+  submissions QuizSubmission[]
+}
+
+model QuizQuestion {
+  id            String   @id @default(uuid())
+  question      String
+  options       String[] // Array of answer options
+  correctAnswer Int // Index of correct answer (0-based)
+  position      Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  quizId        String
+  Quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, position])
+}
+
+model QuizSubmission {
+  id             String   @id @default(uuid())
+  score          Int // Percentage score
+  totalQuestions Int
+  correctAnswers Int
+  pointsEarned   Int
+  submittedAt    DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  quizId         String
+  userId         String
+  answers        Json // Store user's answers: { questionId: selectedOptionIndex }
+  Quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  User           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, quizId])
 }
 
 enum CourseLevel {

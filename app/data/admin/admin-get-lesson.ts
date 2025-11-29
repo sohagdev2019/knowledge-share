@@ -29,6 +29,26 @@ export async function adminGetLesson(id: string) {
           dueDate: true,
         },
       },
+      quiz: {
+        select: {
+          id: true,
+          title: true,
+          points: true,
+          required: true,
+          questions: {
+            orderBy: {
+              position: "asc",
+            },
+            select: {
+              id: true,
+              question: true,
+              options: true,
+              correctAnswer: true,
+              position: true,
+            },
+          },
+        },
+      },
     },
   });
 

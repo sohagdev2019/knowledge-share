@@ -56,6 +56,14 @@ export async function adminGetCourseStudents(courseId: string) {
                   points: true,
                 },
               },
+              quiz: {
+                select: {
+                  id: true,
+                  title: true,
+                  points: true,
+                  required: true,
+                },
+              },
             },
           },
         },
@@ -93,6 +101,27 @@ export async function adminGetCourseStudents(courseId: string) {
           feedback: string | null;
           submittedAt: Date;
           submissionCount: number;
+        } | null;
+      }> = [];
+
+      const quizzes: Array<{
+        quizId: string;
+        quizTitle: string | null;
+        quizPoints: number;
+        quizRequired: boolean;
+        lessonId: string;
+        lessonTitle: string;
+        chapterId: string;
+        chapterTitle: string;
+        chapterPosition: number;
+        lessonPosition: number;
+        submission: {
+          id: string;
+          score: number;
+          totalQuestions: number;
+          correctAnswers: number;
+          pointsEarned: number;
+          submittedAt: Date;
         } | null;
       }> = [];
 
@@ -154,6 +183,40 @@ export async function adminGetCourseStudents(courseId: string) {
               submission: submission || null,
             });
           }
+
+          // Get quiz submission if exists
+          if (lesson.quiz) {
+            const quizSubmission = await prisma.quizSubmission.findUnique({
+              where: {
+                userId_quizId: {
+                  userId: userId,
+                  quizId: lesson.quiz.id,
+                },
+              },
+              select: {
+                id: true,
+                score: true,
+                totalQuestions: true,
+                correctAnswers: true,
+                pointsEarned: true,
+                submittedAt: true,
+              },
+            });
+
+            quizzes.push({
+              quizId: lesson.quiz.id,
+              quizTitle: lesson.quiz.title,
+              quizPoints: lesson.quiz.points,
+              quizRequired: lesson.quiz.required,
+              lessonId: lesson.id,
+              lessonTitle: lesson.title,
+              chapterId: chapter.id,
+              chapterTitle: chapter.title,
+              chapterPosition: chapter.position,
+              lessonPosition: lesson.position,
+              submission: quizSubmission || null,
+            });
+          }
         }
       }
 
@@ -177,6 +240,7 @@ export async function adminGetCourseStudents(courseId: string) {
           percentage: progressPercentage,
         },
         assignments,
+        quizzes,
       };
     })
   );

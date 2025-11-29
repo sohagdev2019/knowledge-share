@@ -234,3 +234,176 @@ export async function submitAssignment(
     };
   }
 }
+
+export async function submitQuiz(
+  quizId: string,
+  answers: Record<string, number>,
+  slug: string
+): Promise<ApiResponse & { data?: { score: number; totalQuestions: number; correctAnswers: number; pointsEarned: number } }> {
+  const session = await requireUser();
+
+  try {
+    // Get quiz with questions
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      include: {
+        questions: {
+          orderBy: {
+            position: "asc",
+          },
+        },
+      },
+    });
+
+    if (!quiz) {
+      return {
+        status: "error",
+        message: "Quiz not found",
+      };
+    }
+
+    // Check if already submitted
+    const existingSubmission = await prisma.quizSubmission.findUnique({
+      where: {
+        userId_quizId: {
+          userId: session.id,
+          quizId: quizId,
+        },
+      },
+    });
+
+    // Allow retake if quiz is required and user didn't pass (score < 70%)
+    const canRetake = existingSubmission && quiz.required && existingSubmission.score < 70;
+    
+    if (existingSubmission && !canRetake) {
+      return {
+        status: "error",
+        message: "You have already submitted this quiz",
+      };
+    }
+
+    // Validate all questions are answered
+    if (Object.keys(answers).length !== quiz.questions.length) {
+      return {
+        status: "error",
+        message: "Please answer all questions",
+      };
+    }
+
+    // Calculate score
+    let correctAnswers = 0;
+    const answerMap: Record<string, number> = {};
+
+    quiz.questions.forEach((question) => {
+      const userAnswer = answers[question.id];
+      answerMap[question.id] = userAnswer;
+      if (userAnswer === question.correctAnswer) {
+        correctAnswers++;
+      }
+    });
+
+    const totalQuestions = quiz.questions.length;
+    const score = Math.round((correctAnswers / totalQuestions) * 100);
+
+    // Calculate points earned based on correct answers only
+    // Each correct answer = (total points / total questions)
+    // Example: 10 points, 2 questions = 5 points per correct answer
+    const pointsPerQuestion = quiz.points / totalQuestions;
+    const pointsEarned = Math.round(correctAnswers * pointsPerQuestion);
+
+    // Get user's current points
+    const user = await prisma.user.findUnique({
+      where: { id: session.id },
+      select: { points: true },
+    });
+
+    if (!user) {
+      return {
+        status: "error",
+        message: "User not found",
+      };
+    }
+
+    if (canRetake && existingSubmission) {
+      // Retaking quiz - update existing submission and adjust points
+      const previousPointsEarned = existingSubmission.pointsEarned;
+      const pointsDifference = pointsEarned - previousPointsEarned;
+
+      // Update submission
+      await prisma.quizSubmission.update({
+        where: {
+          userId_quizId: {
+            userId: session.id,
+            quizId: quizId,
+          },
+        },
+        data: {
+          score: score,
+          totalQuestions: totalQuestions,
+          correctAnswers: correctAnswers,
+          pointsEarned: pointsEarned,
+          answers: answerMap,
+          updatedAt: new Date(),
+        },
+      });
+
+      // Adjust points (add difference)
+      if (pointsDifference !== 0) {
+        await prisma.user.update({
+          where: { id: session.id },
+          data: {
+            points: {
+              increment: pointsDifference,
+            },
+          },
+        });
+      }
+    } else {
+      // First time submission - create new submission
+      await prisma.quizSubmission.create({
+        data: {
+          quizId: quizId,
+          userId: session.id,
+          score: score,
+          totalQuestions: totalQuestions,
+          correctAnswers: correctAnswers,
+          pointsEarned: pointsEarned,
+          answers: answerMap,
+        },
+      });
+
+      // Award points
+      if (pointsEarned > 0) {
+        await prisma.user.update({
+          where: { id: session.id },
+          data: {
+            points: {
+              increment: pointsEarned,
+            },
+          },
+        });
+      }
+    }
+
+    revalidatePath(`/dashboard/${slug}`);
+
+    return {
+      status: "success",
+      message: canRetake 
+        ? `Quiz retaken! ${pointsEarned > existingSubmission!.pointsEarned ? `You earned ${pointsEarned - existingSubmission!.pointsEarned} more points.` : pointsEarned < existingSubmission!.pointsEarned ? `You lost ${existingSubmission!.pointsEarned - pointsEarned} points.` : "Your score has been updated."}`
+        : `Quiz submitted! You earned ${pointsEarned} points.`,
+      data: {
+        score,
+        totalQuestions,
+        correctAnswers,
+        pointsEarned,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to submit quiz:", error);
+    return {
+      status: "error",
+      message: "Failed to submit quiz. Please try again.",
+    };
+  }
+}
