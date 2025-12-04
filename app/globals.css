@@ -61,41 +61,73 @@
     0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0.025em;
+  /* Additional accent colors */
+  --accent-green: var(--accent-green);
+  --accent-purple: var(--accent-purple);
+  --accent-cyan: var(--accent-cyan);
+  --accent-orange: var(--accent-orange);
+  --accent-yellow: var(--accent-yellow);
+  --accent-blue: var(--accent-blue);
 }
 
 .dark {
-  --background: #1a2e44;
-  --foreground: #fff;
-  --card: #1a2e44;
-  --card-foreground: oklch(0.9818 0.0054 95.0986);
-  --popover: oklch(0.3085 0.0035 106.6039);
-  --popover-foreground: oklch(0.9211 0.004 106.4781);
-  --primary: oklch(0.76 0.17 155);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.9818 0.0054 95.0986);
-  --secondary-foreground: oklch(0.3085 0.0035 106.6039);
-  --muted: oklch(0.2213 0.0038 106.707);
-  --muted-foreground: #d5d9e1;
-  --accent: oklch(0.213 0.0078 95.4245);
-  --accent-foreground: oklch(0.9663 0.008 98.8792);
-  --destructive: oklch(0.6368 0.2078 25.3313);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.3618 0.0101 106.8928);
-  --input: oklch(0.4336 0.0113 100.2195);
-  --ring: oklch(0.5937 0.1673 253.063);
+  /* Main Background - Very dark charcoal gray */
+  --background: #151718;
+  /* Primary Text - White/very light gray */
+  --foreground: #F3F4F6;
+  /* Cards - Slightly lighter dark gray */
+  --card: #212325;
+  --card-foreground: #F3F4F6;
+  /* Popovers */
+  --popover: #212325;
+  --popover-foreground: #F3F4F6;
+  /* Primary - Vibrant green for CTAs */
+  --primary: #36D399;
+  --primary-foreground: #151718;
+  /* Secondary */
+  --secondary: #2B2D2F;
+  --secondary-foreground: #F3F4F6;
+  /* Muted - For subtle backgrounds */
+  --muted: #2B2D2F;
+  /* Secondary Text - Lighter gray for less prominent info */
+  --muted-foreground: #A0A0A0;
+  /* Accent - Darker gray for selected/hover states */
+  --accent: #2B2D2F;
+  --accent-foreground: #F3F4F6;
+  /* Destructive */
+  --destructive: #EF4444;
+  --destructive-foreground: #F3F4F6;
+  /* Borders - Subtle dark gray */
+  --border: #2B2D2F;
+  /* Input backgrounds */
+  --input: #212325;
+  /* Focus ring */
+  --ring: #36D399;
+  /* Chart colors - Keeping vibrant colors for charts */
   --chart-1: oklch(0.5583 0.1276 42.9956);
   --chart-2: oklch(0.6898 0.1581 290.4107);
   --chart-3: oklch(0.213 0.0078 95.4245);
   --chart-4: oklch(0.3074 0.0516 289.323);
   --chart-5: oklch(0.5608 0.1348 42.0584);
-  --sidebar: #0f1d2d;
-  --sidebar-foreground: #f5f7fb;
-  --sidebar-primary: #1f3a5f;
-  --sidebar-primary-foreground: #fdfdfd;
-  --sidebar-accent: #1a2c44;
-  --sidebar-accent-foreground: #f5f7fb;
-  --sidebar-border: #1e3148;
-  --sidebar-ring: #2c4b73;
+  /* Sidebar - Matching card background */
+  --sidebar: #212325;
+  --sidebar-foreground: #F3F4F6;
+  /* Selected sidebar item - Darker gray with highlight */
+  --sidebar-primary: #2B2D2F;
+  --sidebar-primary-foreground: #F3F4F6;
+  /* Sidebar accent/hover */
+  --sidebar-accent: #2B2D2F;
+  --sidebar-accent-foreground: #F3F4F6;
+  /* Sidebar borders */
+  --sidebar-border: #2B2D2F;
+  --sidebar-ring: #36D399;
+  /* Additional accent colors for gradients and special elements */
+  --accent-green: #36D399;
+  --accent-purple: #9B59B6;
+  --accent-cyan: #22D3EE;
+  --accent-orange: #F59E0B;
+  --accent-yellow: #EAB308;
+  --accent-blue: #3B82F6;
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
@@ -152,6 +184,12 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-accent-green: var(--accent-green);
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-yellow: var(--accent-yellow);
+  --color-accent-blue: var(--accent-blue);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);

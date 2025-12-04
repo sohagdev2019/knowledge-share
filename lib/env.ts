@@ -19,6 +19,7 @@ export const env = createEnv({
     AWS_REGION: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    OPENAI_API_KEY: z.string().optional(),
   },
 
   client: {

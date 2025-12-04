@@ -19,7 +19,7 @@ export default function Hero() {
   return (
     <section
       ref={ref}
-      className="relative py-12 md:py-16 overflow-hidden bg-background dark:bg-[#1a2e44] transition-colors duration-300"
+      className="relative py-12 md:py-16 overflow-hidden transition-colors duration-300"
     >
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex flex-col items-center text-center space-y-6 max-w-3xl mx-auto">

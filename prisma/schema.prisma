@@ -43,6 +43,10 @@ model User {
   sessions              Session[]
   supportCallsCreated   SupportCall[]          @relation("SupportCallCreator")
   supportCallRequests   SupportCallRequest[]   @relation("SupportCallRequestUser")
+  blogs                 Blog[]
+  blogComments          BlogComment[]
+  blogReactions         BlogReaction[]
+  notifications         Notification[]
 
   @@map("user")
 }
@@ -133,6 +137,7 @@ model Course {
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   enrollment       Enrollment[]
   supportCalls     SupportCall[]
+  blogs             Blog[]
 }
 
 model Chapter {
@@ -450,4 +455,146 @@ enum SupportRequestStatus {
   Accepted
   Rejected
   Completed
+}
+
+// Blog System Models
+model Blog {
+  id              String         @id @default(uuid())
+  title           String
+  slug            String         @unique
+  content         String         // Rich text content (HTML)
+  excerpt         String?        // Short description for preview
+  coverImageKey   String?        // S3 key for cover image
+  seoTitle        String?
+  seoDescription  String?
+  readingTime     Int            @default(0) // in minutes
+  status          BlogStatus     @default(Pending)
+  isFeatured      Boolean        @default(false)
+  isDraft         Boolean        @default(false)
+  viewCount       Int            @default(0)
+  likeCount       Int            @default(0)
+  commentCount    Int            @default(0)
+  pointsRequired  Int            @default(5) // Points needed to post
+  pointsSpent     Int            @default(0) // Points deducted when posted
+  pointsEarned    Int            @default(0) // Points earned from engagement
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  publishedAt     DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  authorId        String
+  categoryId      String?
+  courseId        String?        // Optional: link to course
+  author          User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category        BlogCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  Course          Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  tags            BlogTag[]
+  comments        BlogComment[]
+  reactions       BlogReaction[]
+
+  @@index([status])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([isFeatured])
+  @@index([createdAt])
+  @@map("blog")
+}
+
+model BlogCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  blogs       Blog[]
+
+  @@map("blog_category")
+}
+
+model BlogTag {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String
+  blogId    String
+  createdAt DateTime @default(now())
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@unique([blogId, slug])
+  @@index([slug])
+  @@map("blog_tag")
+}
+
+model BlogComment {
+  id        String         @id @default(uuid())
+  content   String
+  parentId  String?        // For threaded comments
+  upvotes   Int            @default(0)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  blogId    String
+  authorId  String
+  blog      Blog           @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    BlogComment?   @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   BlogComment[]  @relation("CommentReplies")
+
+  @@index([blogId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("blog_comment")
+}
+
+model BlogReaction {
+  id        String      @id @default(uuid())
+  type      ReactionType
+  createdAt DateTime    @default(now())
+  blogId    String
+  userId    String
+  blog      Blog        @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([blogId, userId])
+  @@index([blogId])
+  @@index([userId])
+  @@map("blog_reaction")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@map("notification")
+}
+
+enum BlogStatus {
+  Pending
+  Approved
+  Rejected
+  Published
+}
+
+enum ReactionType {
+  Like
+  Love
+  Insightful
+  Funny
+}
+
+enum NotificationType {
+  BlogApproved
+  BlogRejected
+  CommentReceived
+  ReactionReceived
+  PointsEarned
+  AdminReply
 }

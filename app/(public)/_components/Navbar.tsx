@@ -10,7 +10,7 @@ import { useConstructUrl as constructFileUrl } from "@/hooks/use-construct-url";
 
 const resourcesItems = [
   { name: "Creator Stories", href: "/creator-stories" },
-  { name: "Blog", href: "#" },
+  { name: "Blog", href: "/blogs" },
 ];
 
 const supportItems = [
