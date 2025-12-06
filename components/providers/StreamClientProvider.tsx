@@ -2,7 +2,7 @@
 
 import { StreamVideo, StreamVideoClient } from "@stream-io/video-react-sdk";
 import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "next-auth/react";
 import { streamTokenProvider } from "@/app/actions/stream.actions";
 
 export function StreamClientProvider({
@@ -13,7 +13,8 @@ export function StreamClientProvider({
   const [videoClient, setVideoClient] = useState<StreamVideoClient | null>(
     null
   );
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, status } = useSession();
+  const isPending = status === "loading";
 
   useEffect(() => {
     if (isPending) {

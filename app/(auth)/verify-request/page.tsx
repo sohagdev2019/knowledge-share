@@ -13,7 +13,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { authClient } from "@/lib/auth-client";
+import { signIn, useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -29,6 +29,7 @@ export default function VerifyRequestRoute() {
 
 function VerifyRequest() {
   const router = useRouter();
+  const { data: session, update } = useSession();
   const [otp, setOtp] = useState("");
   const [emailPending, startTranstion] = useTransition();
   const [resendPending, setResendPending] = useState(false);
@@ -90,32 +91,95 @@ function VerifyRequest() {
 
           const result = await response.json();
 
-          if (result.status === "success") {
-            toast.success("Login successful!");
-            // Reload the page to get the new session
-            window.location.href = "/";
+          if (result.status === "success" && result.sessionToken) {
+            // Sign in with NextAuth using the session token as password
+            // The auth.ts authorize function will recognize it as a session token
+            try {
+              const signInResult = await signIn("credentials", {
+                email: result.email,
+                password: result.sessionToken, // Session token used as password
+                redirect: false,
+              });
+
+              if (signInResult?.ok) {
+                // Wait a bit for the session cookie to be set
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Force session update
+                await update();
+                
+                toast.success("Login successful!");
+                
+                // Small delay before redirect to ensure session is set
+                setTimeout(() => {
+                  router.push("/");
+                  router.refresh();
+                }, 200);
+              } else {
+                console.error("Sign in result:", signInResult);
+                toast.error("Failed to create session. Please try again.");
+              }
+            } catch (sessionError) {
+              console.error("Session creation error:", sessionError);
+              toast.error("An error occurred while signing you in. Please try again.");
+            }
           } else {
-            toast.error(result.message);
+            toast.error(result.message || "Failed to verify OTP");
           }
         } catch (error) {
           toast.error("An unexpected error occurred. Please try again.");
           console.error("Verification error:", error);
         }
       } else {
-        // Email OTP login
-        await authClient.signIn.emailOtp({
-          email: email,
-          otp: otp,
-          fetchOptions: {
-            onSuccess: () => {
-              toast.success("Email verified");
-              router.push("/");
+        // Email OTP login - verify OTP and create session
+        try {
+          // Verify email OTP (similar to password OTP flow)
+          const response = await fetch("/api/auth/email/verify", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
-            onError: () => {
-              toast.error("Error verifying Email/OTP");
-            },
-          },
-        });
+            body: JSON.stringify({
+              email: email,
+              otp: otp,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.status === "success" && result.sessionToken) {
+            // Sign in with NextAuth using the session token
+            const signInResult = await signIn("credentials", {
+              email: result.email,
+              password: result.sessionToken,
+              redirect: false,
+            });
+
+            if (signInResult?.ok) {
+              // Wait a bit for the session cookie to be set
+              await new Promise(resolve => setTimeout(resolve, 100));
+              
+              // Force session update
+              await update();
+              
+              toast.success("Login successful!");
+              
+              // Small delay before redirect to ensure session is set
+              setTimeout(() => {
+                router.push("/");
+                router.refresh();
+              }, 200);
+            } else {
+              console.error("Sign in result:", signInResult);
+              toast.error("Failed to create session. Please try again.");
+            }
+          } else {
+            toast.error(result.message || "Invalid verification code");
+          }
+        } catch (error) {
+          console.error("Email OTP verification error:", error);
+          toast.error("An error occurred. Please try again.");
+        }
       }
     });
   }

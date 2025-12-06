@@ -4,14 +4,15 @@ import { useStreamVideoClient } from "@stream-io/video-react-sdk";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "next-auth/react";
 
 export function useSupportCalls() {
   const client = useStreamVideoClient();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, status } = useSession();
+  const isPending = status === "loading";
 
   useEffect(() => {
     // Wait for both session and client to be ready

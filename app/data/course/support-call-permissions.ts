@@ -2,7 +2,6 @@ import "server-only";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { headers } from "next/headers";
 
 /**
  * Check if user can join a support call directly (admin or course owner)
@@ -10,9 +9,7 @@ import { headers } from "next/headers";
 export async function canJoinSupportCallDirectly(
   supportCallId: string
 ): Promise<boolean> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth();
 
   if (!session?.user) {
     return false;
@@ -81,9 +78,7 @@ export async function hasAcceptedRequest(
 export async function canJoinSupportCall(
   supportCallId: string
 ): Promise<{ canJoin: boolean; reason?: string }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth();
 
   if (!session?.user) {
     return { canJoin: false, reason: "Not authenticated" };
@@ -115,9 +110,7 @@ export async function canJoinSupportCall(
 export async function getSupportCallByStreamIdWithPermission(
   streamCallId: string
 ) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth();
 
   if (!session?.user) {
     return null;
@@ -155,6 +148,7 @@ export async function getSupportCallByStreamIdWithPermission(
 
   return supportCall;
 }
+
 
 
 

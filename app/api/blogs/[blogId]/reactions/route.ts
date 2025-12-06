@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
 export async function POST(
   request: Request,
@@ -9,9 +8,7 @@ export async function POST(
 ) {
   try {
     const { blogId } = await params;
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await auth();
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -77,5 +74,6 @@ export async function POST(
     );
   }
 }
+
 
 

@@ -2,7 +2,7 @@
 
 import { Heart, ThumbsUp, Lightbulb, Laugh } from "lucide-react";
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -12,7 +12,7 @@ interface BlogReactionsProps {
 }
 
 export function BlogReactions({ blogId, initialLikeCount }: BlogReactionsProps) {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [reacted, setReacted] = useState(false);
 
@@ -88,5 +88,6 @@ export function BlogReactions({ blogId, initialLikeCount }: BlogReactionsProps) 
     </div>
   );
 }
+
 
 

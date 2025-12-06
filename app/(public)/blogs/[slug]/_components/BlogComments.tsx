@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MessageCircle, Send, User } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -31,7 +31,7 @@ interface BlogCommentsProps {
 }
 
 export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [comment, setComment] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -231,5 +231,6 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
     </div>
   );
 }
+
 
 

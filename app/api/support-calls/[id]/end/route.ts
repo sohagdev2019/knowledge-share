@@ -1,5 +1,4 @@
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { endSupportCall, getSupportCallByStreamId } from "@/app/data/course/support-calls";
 
@@ -8,9 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

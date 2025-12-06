@@ -147,8 +147,8 @@ export async function enrollInCourseAction(
           },
         ],
         mode: "payment",
-        success_url: `${env.BETTER_AUTH_URL}/payment/success`,
-        cancel_url: `${env.BETTER_AUTH_URL}/payment/cancel`,
+        success_url: `${env.NEXTAUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"}/payment/success`,
+        cancel_url: `${env.NEXTAUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"}/payment/cancel`,
         metadata: {
           userId: user.id,
           courseId: course.id,

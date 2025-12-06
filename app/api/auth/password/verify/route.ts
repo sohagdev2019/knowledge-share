@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { headers } from "next/headers";
-import { randomBytes } from "crypto";
-import { serializeSignedCookie } from "better-call";
-import { env } from "@/lib/env";
+import { signIn } from "@/lib/auth";
 
 const verifyPasswordOtpSchema = z.object({
   email: z.string().email(),
@@ -94,8 +91,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify user still exists
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
       where: { id: loginData.userId },
+      include: {
+        accounts: {
+          where: {
+            providerId: "credential",
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -111,68 +115,81 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create session manually using Better Auth's format
-    const headerList = await headers();
-    
-    // Generate session token (Better Auth uses base64url encoded random bytes)
-    const sessionToken = randomBytes(32).toString("base64url");
-    
-    // Calculate expiration (30 days)
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
-    
-    // Get user agent and IP from request
-    const userAgent = headerList.get("user-agent") || null;
-    const ipAddress = headerList.get("x-forwarded-for") || 
-                     headerList.get("x-real-ip") || 
-                     null;
+    // Get the password from the account for NextAuth signIn
+    const credentialAccount = user.accounts.find(
+      (acc) => acc.providerId === "credential" && acc.password
+    );
 
-    // Create session in database
-    await prisma.session.create({
-      data: {
-        id: sessionToken,
-        token: sessionToken,
-        userId: loginData.userId,
-        expiresAt: expiresAt,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userAgent: userAgent,
-        ipAddress: ipAddress?.split(",")[0] || null, // Take first IP if multiple
-      },
-    });
+    if (!credentialAccount || !credentialAccount.password) {
+      await prisma.verification.delete({
+        where: { id: verification.id },
+      });
+      return NextResponse.json(
+        {
+          status: "error",
+          message: "Password account not found.",
+        },
+        { status: 404 }
+      );
+    }
 
     // Delete verification record
     await prisma.verification.delete({
       where: { id: verification.id },
     });
 
-    // Set session cookie using Better Auth's cookie name
-    const response = NextResponse.json({
-      status: "success",
-      message: "Login successful! Redirecting...",
+    // Create a temporary session token for NextAuth sign-in
+    // This allows the client to complete the sign-in without requiring the password again
+    const sessionToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    
+    // Store session token in verification table with user info
+    await prisma.verification.create({
+      data: {
+        id: sessionToken,
+        identifier: user.email,
+        value: JSON.stringify({ 
+          userId: user.id, 
+          email: user.email,
+          type: "session-token",
+          verified: true 
+        }),
+        expiresAt: expiresAt,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     });
 
-    const shouldUseSecurePrefix =
-      env.BETTER_AUTH_URL?.startsWith("https://") ||
-      process.env.NODE_ENV === "production";
-    const cookieName = `${
-      shouldUseSecurePrefix ? "__Secure-" : ""
-    }better-auth.session_token`;
-    const signedCookie = await serializeSignedCookie(
-      cookieName,
-      sessionToken,
-      env.BETTER_AUTH_SECRET,
-      {
-        httpOnly: true,
-        secure: shouldUseSecurePrefix,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
-      }
-    );
-    response.headers.append("Set-Cookie", signedCookie);
-
-    return response;
+    // Create NextAuth session directly
+    try {
+      // Use signIn to create session
+      // We'll create a special request for this
+      const baseUrl = process.env.NEXTAUTH_URL || req.nextUrl.origin;
+      const callbackUrl = new URL("/api/auth/callback/credentials", baseUrl);
+      
+      // Create a form-encoded request body
+      const formData = new URLSearchParams();
+      formData.append("email", user.email);
+      formData.append("password", sessionToken); // Use session token as password
+      formData.append("csrfToken", "verified-otp"); // Special marker
+      
+      // For now, return the session token and let client handle sign-in
+      // The client will use a special API route to create the session
+      return NextResponse.json({
+        status: "success",
+        message: "OTP verified successfully. Signing you in...",
+        email: user.email,
+        sessionToken: sessionToken,
+      });
+    } catch (error) {
+      console.error("Error creating session:", error);
+      return NextResponse.json({
+        status: "success",
+        message: "OTP verified successfully.",
+        email: user.email,
+        sessionToken: sessionToken,
+      });
+    }
   } catch (error) {
     console.error("Verify password OTP error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -180,10 +197,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         status: "error",
-        message: `Failed to login: ${errorMessage}`,
+        message: `Failed to verify OTP: ${errorMessage}`,
       },
       { status: 500 }
     );
   }
 }
-

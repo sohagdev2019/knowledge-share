@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
 export async function BlogHero() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth();
 
   return (
     <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent dark:from-primary/20 dark:via-primary/10 border-b border-border">
@@ -34,5 +31,6 @@ export async function BlogHero() {
     </div>
   );
 }
+
 
 

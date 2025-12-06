@@ -1,20 +1,20 @@
 import "server-only";
 
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
 export const requireAdmin = cache(async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth();
 
-  if (!session) {
+  if (!session?.user) {
     return redirect("/login");
   }
 
-  if ((session.user as { role?: string }).role !== "admin") {
+  const userRole = (session.user as any).role;
+  
+  // Allow both admin and superadmin to access admin routes
+  if (userRole !== "admin" && userRole !== "superadmin") {
     return redirect("/not-admin");
   }
 

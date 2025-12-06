@@ -2,7 +2,6 @@ import "server-only";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { headers } from "next/headers";
 
 export async function checkCallPermission(streamCallId: string): Promise<{
   canJoin: boolean;
@@ -25,9 +24,7 @@ export async function checkCallPermission(streamCallId: string): Promise<{
     supportType: string;
   } | null;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth();
 
   if (!session?.user) {
     return {

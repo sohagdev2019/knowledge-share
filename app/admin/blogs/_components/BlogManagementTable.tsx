@@ -41,6 +41,7 @@ interface BlogManagementTableProps {
   total: number;
   currentPage: number;
   status: string;
+  userRole: string | null;
 }
 
 export function BlogManagementTable({
@@ -48,6 +49,7 @@ export function BlogManagementTable({
   total,
   currentPage,
   status,
+  userRole,
 }: BlogManagementTableProps) {
   const router = useRouter();
   const [processing, setProcessing] = useState<string | null>(null);
@@ -168,7 +170,7 @@ export function BlogManagementTable({
                         <Eye className="w-4 h-4" />
                       </Button>
                     </Link>
-                    {blog.status === "Pending" && (
+                    {blog.status === "Pending" && userRole === "superadmin" && (
                       <>
                         <Button
                           variant="ghost"

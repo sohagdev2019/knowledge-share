@@ -1,14 +1,13 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { StreamClient } from "@stream-io/node-sdk";
 
 /**
  * Generates a Stream.io JWT token for the authenticated user
  * 
  * This function:
- * 1. Verifies user is authenticated (via Better Auth)
+ * 1. Verifies user is authenticated (via NextAuth)
  * 2. Creates Stream server client with secret key
  * 3. Generates JWT token for the user
  * 4. Returns token to client
@@ -18,10 +17,8 @@ import { StreamClient } from "@stream-io/node-sdk";
  */
 export const streamTokenProvider = async (): Promise<string> => {
   try {
-    // Step 1: Get authenticated user from Better Auth
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    // Step 1: Get authenticated user from NextAuth
+    const session = await auth();
 
     if (!session?.user?.id) {
       console.error("Token generation failed: User not authenticated");

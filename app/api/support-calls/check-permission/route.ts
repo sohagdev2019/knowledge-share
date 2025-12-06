@@ -1,13 +1,10 @@
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { checkCallPermission } from "@/app/data/course/check-call-permission";
 
 export async function GET(request: Request) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

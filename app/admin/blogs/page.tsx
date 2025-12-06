@@ -1,7 +1,8 @@
-import { requireAdmin } from "@/app/data/admin/require-admin";
+import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { getBlogs } from "@/app/data/blog/get-blogs";
 import { BlogStatus } from "@/lib/generated/prisma";
 import { BlogManagementTable } from "./_components/BlogManagementTable";
+import { getUserRole } from "@/app/data/admin/get-user-role";
 
 interface SearchParams {
   status?: string;
@@ -13,7 +14,8 @@ export default async function AdminBlogsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  await requireAdmin();
+  await requireSuperAdmin();
+  const userRole = await getUserRole();
   const params = await searchParams;
   const status = (params.status as BlogStatus) || BlogStatus.Pending;
   const page = parseInt(params.page || "1");
@@ -33,7 +35,13 @@ export default async function AdminBlogsPage({
         <h1 className="text-3xl font-bold mb-2">Blog Management</h1>
         <p className="text-muted-foreground">Approve, reject, edit, and manage blog posts</p>
       </div>
-      <BlogManagementTable blogs={blogsData.blogs} total={blogsData.total} currentPage={page} status={status} />
+      <BlogManagementTable 
+        blogs={blogsData.blogs} 
+        total={blogsData.total} 
+        currentPage={page} 
+        status={status}
+        userRole={userRole}
+      />
     </div>
   );
 }

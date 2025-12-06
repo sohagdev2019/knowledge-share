@@ -1,81 +1,191 @@
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
+import NextAuth from "next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./db";
 import { env } from "./env";
-import { emailOTP } from "better-auth/plugins";
-import { getBrevoClient, SendSmtpEmail } from "./brevo";
-import { otpEmailTemplate } from "./email-templates";
-import { admin } from "better-auth/plugins";
+import Credentials from "next-auth/providers/credentials";
+import GitHub from "next-auth/providers/github";
+import bcrypt from "bcryptjs";
 
-export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "postgresql", // or "mysql", "postgresql", ...etc
-  }),
-  socialProviders: env.AUTH_GITHUB_CLIENT_ID && env.AUTH_GITHUB_SECRET ? {
-    github: {
-      clientId: env.AUTH_GITHUB_CLIENT_ID,
-      clientSecret: env.AUTH_GITHUB_SECRET,
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(prisma) as any,
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  pages: {
+    signIn: "/login",
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
     },
-  } : {},
+  },
+  providers: [
+    Credentials({
+      name: "Email",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
 
-  plugins: [
-    emailOTP({
-      async sendVerificationOTP({ email, otp }) {
-        if (!env.BREVO_API_KEY) {
-          console.log(`[DEV] OTP for ${email}: ${otp}`);
-          throw new Error("Email service not configured. Please set BREVO_API_KEY environment variable.");
+        const normalizedEmail = (credentials.email as string).toLowerCase().trim();
+        const password = credentials.password as string;
+
+        // Check if this is a session token (UUID format)
+        const isSessionToken = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(password);
+
+        if (isSessionToken) {
+          // Handle OTP-verified session token
+          const verification = await prisma.verification.findUnique({
+            where: { id: password },
+          });
+
+          if (!verification) {
+            return null;
+          }
+
+          // Check if expired
+          if (verification.expiresAt < new Date()) {
+            // Clean up expired token
+            await prisma.verification.delete({
+              where: { id: password },
+            }).catch(() => {}); // Ignore errors if already deleted
+            return null;
+          }
+
+          let sessionData: { userId: string; email: string; type: string; verified?: boolean };
+          try {
+            sessionData = JSON.parse(verification.value);
+          } catch {
+            return null;
+          }
+
+          // Validate session data
+          if (sessionData.type !== "session-token" || !sessionData.verified || sessionData.email !== normalizedEmail) {
+            return null;
+          }
+
+          // Get user
+          const user = await prisma.user.findUnique({
+            where: { id: sessionData.userId },
+          });
+
+          if (!user) {
+            return null;
+          }
+
+          // Delete session token after successful use
+          await prisma.verification.delete({
+            where: { id: password },
+          }).catch(() => {}); // Ignore errors if already deleted
+
+          // Return user object for JWT
+          return {
+            id: user.id,
+            email: user.email,
+            name: `${user.firstName} ${user.lastName || ""}`.trim() || user.email,
+            image: user.image,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            role: user.role,
+          };
         }
-        
-        try {
-          const brevoClient = getBrevoClient();
-          const sendSmtpEmail = new SendSmtpEmail();
-          
-          // Use environment variable for sender email - MUST be verified in Brevo
-          const senderEmail = env.BREVO_SENDER_EMAIL;
-          const senderName = env.BREVO_SENDER_NAME || "KnowledgeShare";
-          
-          if (!senderEmail) {
-            throw new Error("BREVO_SENDER_EMAIL is required. Please set it in your environment variables with a verified sender email from your Brevo account.");
-          }
-          
-          sendSmtpEmail.subject = "Your KnowledgeShare login code";
-          sendSmtpEmail.htmlContent = otpEmailTemplate({ otp });
-          sendSmtpEmail.sender = { name: senderName, email: senderEmail };
-          sendSmtpEmail.to = [{ email }];
-          
-          await brevoClient.sendTransacEmail(sendSmtpEmail);
-        } catch (error: any) {
-          console.error("=== Brevo Email Error ===");
-          console.error("Error message:", error.message);
-          console.error("Error code:", error.code);
-          
-          // Log response body if available
-          if (error.response?.body) {
-            console.error("Response body:", JSON.stringify(error.response.body, null, 2));
-          }
-          
-          // Log error body if available (Brevo SDK format)
-          if (error.body) {
-            console.error("Error body:", JSON.stringify(error.body, null, 2));
-          }
-          
-          // Log full error object for debugging
-          console.error("Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-          
-          // Provide helpful error message based on error code
-          if (error.code === "INVALID_ORIGIN" || error.body?.code === "INVALID_ORIGIN") {
-            throw new Error(
-              "INVALID_ORIGIN error: This usually means:\n" +
-              "1. Your server's IP address is not authorized in Brevo. Go to Settings > Security > Authorized IPs and add your server's IP.\n" +
-              "2. The sender email is not verified. Go to Settings > Senders & Domains and verify your sender email.\n" +
-              "3. Your domain is not authenticated. Verify your domain in Brevo settings."
-            );
-          }
-          
-          throw new Error(`Failed to send email: ${error.message || error.body?.message || "Unknown error"}`);
+
+        // Regular password authentication
+        // Find user by email or username
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: normalizedEmail },
+              { username: normalizedEmail },
+            ],
+          },
+          include: {
+            accounts: {
+              where: {
+                providerId: "credential",
+              },
+            },
+          },
+        });
+
+        if (!user) {
+          return null;
         }
+
+        // Check if user has a credential account with password
+        const credentialAccount = user.accounts.find(
+          (acc) => acc.providerId === "credential" && acc.password
+        );
+
+        if (!credentialAccount || !credentialAccount.password) {
+          return null;
+        }
+
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(
+          password,
+          credentialAccount.password
+        );
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        // Return user object for JWT
+        return {
+          id: user.id,
+          email: user.email,
+          name: `${user.firstName} ${user.lastName || ""}`.trim() || user.email,
+          image: user.image,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+          role: user.role,
+        };
       },
     }),
-    admin(),
+    ...(env.AUTH_GITHUB_CLIENT_ID && env.AUTH_GITHUB_SECRET
+      ? [
+          GitHub({
+            clientId: env.AUTH_GITHUB_CLIENT_ID,
+            clientSecret: env.AUTH_GITHUB_SECRET,
+          }),
+        ]
+      : []),
   ],
+  callbacks: {
+    async jwt({ token, user, account }) {
+      if (user) {
+        token.id = user.id;
+        token.firstName = (user as any).firstName;
+        token.lastName = (user as any).lastName;
+        token.username = (user as any).username;
+        token.role = (user as any).role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).id = token.id;
+        (session.user as any).firstName = token.firstName;
+        (session.user as any).lastName = token.lastName;
+        (session.user as any).username = token.username;
+        (session.user as any).role = token.role;
+      }
+      return session;
+    },
+  },
+  secret: env.NEXTAUTH_SECRET,
 });

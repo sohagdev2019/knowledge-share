@@ -1,5 +1,4 @@
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { updateSupportRequestStatus } from "@/app/data/course/support-calls";
 import { canJoinSupportCallDirectly } from "@/app/data/course/support-call-permissions";
@@ -10,9 +9,7 @@ export async function PATCH(
   { params }: { params: { id: string; requestId: string } }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -76,6 +73,7 @@ export async function PATCH(
     );
   }
 }
+
 
 
 

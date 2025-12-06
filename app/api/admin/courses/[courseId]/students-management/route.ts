@@ -1,7 +1,6 @@
 import { adminGetCourseStudentsManagement } from "@/app/data/admin/admin-get-course-students-management";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
 export async function GET(
   request: Request,
@@ -9,9 +8,7 @@ export async function GET(
 ) {
   try {
     // Check authentication directly in API route
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await auth();
 
     if (!session) {
       return NextResponse.json(

@@ -1,15 +1,12 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 
 export async function getUserRole(): Promise<string | null> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth();
 
-  if (!session) {
+  if (!session?.user?.id) {
     return null;
   }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
+import { auth } from "@/lib/auth";
 import arcjet, { createMiddleware, detectBot } from "@arcjet/next";
 
 // Configure Arcjet
@@ -27,15 +27,14 @@ const aj = arcjet({
 
 // Your existing authentication middleware
 async function authMiddleware(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
+  const session = await auth();
 
-  if (!sessionCookie) {
+  if (!session) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
 }
-
 
 export const config = {
   // Run on all routes except static assets, but auth check only on admin routes

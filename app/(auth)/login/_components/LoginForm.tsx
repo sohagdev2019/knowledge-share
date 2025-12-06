@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
+import { signIn } from "next-auth/react";
 
 import { GithubIcon, Loader, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -26,18 +26,14 @@ export function LoginForm() {
 
   async function signInWithGithub() {
     startGithubTransition(async () => {
-      await authClient.signIn.social({
-        provider: "github",
-        callbackURL: "/",
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Singed in with Github, you will be redirected...");
-          },
-          onError: () => {
-            toast.error("Internal Server Error");
-          },
-        },
-      });
+      try {
+        await signIn("github", {
+          callbackUrl: "/",
+        });
+      } catch (error) {
+        toast.error("Failed to sign in with GitHub");
+        console.error("GitHub sign in error:", error);
+      }
     });
   }
 
@@ -49,6 +45,7 @@ export function LoginForm() {
 
     startPasswordTransition(async () => {
       try {
+        // First, verify password and send OTP
         const response = await fetch("/api/auth/password/send-otp", {
           method: "POST",
           headers: {
@@ -63,10 +60,11 @@ export function LoginForm() {
         const result = await response.json();
 
         if (result.status === "success") {
-          toast.success(result.message);
-          router.push(`/verify-request?email=${result.email}&type=password`);
+          toast.success("Verification code sent to your email");
+          // Redirect to OTP verification page
+          router.push(`/verify-request?email=${encodeURIComponent(result.email)}&type=password`);
         } else {
-          toast.error(result.message);
+          toast.error(result.message || "Invalid username/email or password");
         }
       } catch (error) {
         toast.error("An unexpected error occurred. Please try again.");
@@ -79,7 +77,7 @@ export function LoginForm() {
         <CardHeader>
         <CardTitle className="text-xl">Welcome Back!</CardTitle>
         <CardDescription>
-          Login with your GitHub account or username/password
+          Login with your GitHub account or email/password
         </CardDescription>
       </CardHeader>
 

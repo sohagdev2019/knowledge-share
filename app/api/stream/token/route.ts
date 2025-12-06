@@ -1,14 +1,11 @@
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { StreamClient } from "getstream";
 import { env } from "@/lib/env";
 
 export async function GET() {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json(

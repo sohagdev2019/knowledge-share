@@ -2,14 +2,11 @@ import "server-only";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { headers } from "next/headers";
 
 export async function checkIfCourseBought(courseId: string): Promise<boolean> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth();
 
-  if (!session?.user) return false;
+  if (!session?.user?.id) return false;
 
   const enrollment = await prisma.enrollment.findUnique({
     where: {

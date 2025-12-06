@@ -37,70 +37,86 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+
+const allNavMainItems = [
+  {
+    title: "Dashboard",
+    url: "/admin",
+    icon: IconDashboard,
+  },
+  {
+    title: "Courses",
+    url: "/admin/courses",
+    icon: IconListDetails,
+    adminOnly: true, // Only visible to admin, not superadmin
+  },
+  {
+    title: "Blogs",
+    url: "/admin/blogs",
+    icon: IconArticle,
+    requiresSuperAdmin: true,
+  },
+  {
+    title: "My Profile",
+    url: "/admin/profile",
+    icon: IconUserCircle,
+  },
+  {
+    title: "Wishlist",
+    url: "/admin/wishlist",
+    icon: IconHeart,
+    adminOnly: true, // Only visible to admin, not superadmin
+  },
+  {
+    title: "Reviews",
+    url: "/admin/reviews",
+    icon: IconStar,
+    adminOnly: true, // Only visible to admin, not superadmin
+  },
+  {
+    title: "Withdrawals",
+    url: "/admin/withdrawals",
+    icon: IconWallet,
+    adminOnly: true, // Only visible to admin, not superadmin
+  },
+  {
+    title: "Announcements",
+    url: "/admin/announcements",
+    icon: IconSpeakerphone,
+  },
+  {
+    title: "Order History",
+    url: "/admin/order-history",
+    icon: IconReceipt,
+    adminOnly: true, // Only visible to admin, not superadmin
+  },
+  {
+    title: "Analytics",
+    url: "/admin/analytics",
+    icon: IconChartBar,
+  },
+  {
+    title: "Projects",
+    url: "/admin/projects",
+    icon: IconFolder,
+    adminOnly: true, // Only visible to admin, not superadmin
+  },
+  {
+    title: "Team",
+    url: "/admin/team",
+    icon: IconUsers,
+  },
+  {
+    title: "Users",
+    url: "/admin/users",
+    icon: IconUsers,
+    requiresSuperAdmin: true,
+  },
+];
 
 const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/admin",
-      icon: IconDashboard,
-    },
-    {
-      title: "Courses",
-      url: "/admin/courses",
-      icon: IconListDetails,
-    },
-    {
-      title: "Blogs",
-      url: "/admin/blogs",
-      icon: IconArticle,
-    },
-    {
-      title: "My Profile",
-      url: "/admin/profile",
-      icon: IconUserCircle,
-    },
-    {
-      title: "Wishlist",
-      url: "/admin/wishlist",
-      icon: IconHeart,
-    },
-    {
-      title: "Reviews",
-      url: "/admin/reviews",
-      icon: IconStar,
-    },
-    {
-      title: "Withdrawals",
-      url: "/admin/withdrawals",
-      icon: IconWallet,
-    },
-    {
-      title: "Announcements",
-      url: "/admin/announcements",
-      icon: IconSpeakerphone,
-    },
-    {
-      title: "Order History",
-      url: "/admin/order-history",
-      icon: IconReceipt,
-    },
-    {
-      title: "Analytics",
-      url: "/admin/analytics",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "/admin/projects",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "/admin/team",
-      icon: IconUsers,
-    },
-  ],
+  navMain: allNavMainItems,
   navClouds: [
     {
       title: "Capture",
@@ -169,6 +185,43 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string } | undefined)?.role;
+
+  // Filter nav items based on user role
+  const navMainItems = React.useMemo(() => {
+    return allNavMainItems
+      .map((item) => {
+        // For superadmin users, update all URLs to use /superadmin prefix
+        if (userRole === "superadmin") {
+          // Map admin routes to superadmin routes (excluding adminOnly items)
+          const urlMap: Record<string, string> = {
+            "/admin": "/superadmin",
+            "/admin/blogs": "/superadmin/blogs",
+            "/admin/profile": "/superadmin/profile",
+            "/admin/announcements": "/superadmin/announcements",
+            "/admin/analytics": "/superadmin/analytics",
+            "/admin/team": "/superadmin/team",
+            "/admin/users": "/superadmin/users",
+          };
+          return { ...item, url: urlMap[item.url] || item.url };
+        }
+        return item;
+      })
+      .filter((item) => {
+        // If item requires superadmin, only show for superadmin
+        if (item.requiresSuperAdmin) {
+          return userRole === "superadmin";
+        }
+        // If item is adminOnly, only show for admin (not superadmin)
+        if (item.adminOnly) {
+          return userRole === "admin";
+        }
+        // Otherwise show for all admin/superadmin users
+        return userRole === "admin" || userRole === "superadmin";
+      });
+  }, [userRole]);
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -187,9 +240,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMainItems} />
 
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavSecondary 
+          items={userRole === "superadmin" 
+            ? data.navSecondary.map(item => ({
+                ...item,
+                url: item.url.replace("/admin/", "/superadmin/")
+              }))
+            : data.navSecondary
+          } 
+          className="mt-auto" 
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

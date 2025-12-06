@@ -22,7 +22,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { HomeIcon, Tv2 } from "lucide-react";
 import { useSignOut } from "@/hooks/use-singout";
@@ -30,7 +30,8 @@ import { useConstructUrl as constructFileUrl } from "@/hooks/use-construct-url";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, status } = useSession();
+  const isPending = status === "loading";
   const handleSignOut = useSignOut();
 
   if (isPending) {

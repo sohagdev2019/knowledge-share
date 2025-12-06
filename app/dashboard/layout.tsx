@@ -13,6 +13,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     select: { role: true },
   });
 
+  // If user is superadmin, redirect to superadmin route
+  if (dbUser?.role === "superadmin") {
+    redirect("/superadmin");
+  }
+
   // If user is admin, redirect to admin route
   if (dbUser?.role === "admin") {
     redirect("/admin");

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/app/data/admin/require-admin";
+import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ blogId: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireSuperAdmin();
     const { blogId } = await params;
     const { reason } = await request.json();
 

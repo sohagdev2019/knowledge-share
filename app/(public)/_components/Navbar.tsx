@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "next-auth/react";
 import { UserDropdown } from "./UserDropdown";
 import { getUserRole } from "./get-user-role";
 import { useConstructUrl as constructFileUrl } from "@/hooks/use-construct-url";
@@ -114,7 +114,8 @@ function NavDropdown({
 }
 
 export function Navbar() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, status } = useSession();
+  const isPending = status === "loading";
   const [userRole, setUserRole] = useState<string | null>(null);
   const sessionFirstName =
     (session?.user as { firstName?: string } | undefined)?.firstName?.trim();
@@ -127,6 +128,8 @@ export function Navbar() {
       setUserRole(null);
     }
   }, [session]);
+
+  console.log("session", session);
 
   // Filter navigation items - removed Courses and Dashboard as they're in profile dropdown
   const visibleNavItems: Array<{ name: string; href: string; requireAuth?: boolean }> = [];
@@ -163,20 +166,20 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4 ml-6">
-            {isPending ? null : session ? (
+            {isPending ? null : session?.user ? (
               <UserDropdown
-                email={session.user.email}
+                email={session.user.email || ""}
                 image={
-                  session?.user.image
+                  session.user.image
                     ? session.user.image.startsWith("http")
                       ? session.user.image
                       : constructFileUrl(session.user.image)
-                    : `https://avatar.vercel.sh/${session?.user.email}`
+                    : `https://avatar.vercel.sh/${session.user.email || ""}`
                 }
                 firstName={
                   sessionFirstName && sessionFirstName.length > 0
                     ? sessionFirstName
-                    : session?.user.email.split("@")[0]
+                    : session.user.email?.split("@")[0] || ""
                 }
                 userRole={userRole}
               />
