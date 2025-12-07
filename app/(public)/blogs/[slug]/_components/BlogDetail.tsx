@@ -40,8 +40,9 @@ interface BlogDetailProps {
 }
 
 export function BlogDetail({ blog }: BlogDetailProps) {
-  const constructFileUrl = useConstructUrl();
+  const constructFileUrl = (key: string) => useConstructUrl(key);
   const [htmlContent, setHtmlContent] = useState<string>("");
+  const [viewCount, setViewCount] = useState(blog.viewCount);
 
   // Parse and render content
   useEffect(() => {
@@ -53,6 +54,27 @@ export function BlogDetail({ blog }: BlogDetailProps) {
       setHtmlContent(blog.content);
     }
   }, [blog.content]);
+
+  // Track view count (only once per user/session)
+  useEffect(() => {
+    const trackView = async () => {
+      try {
+        const response = await fetch(`/api/blogs/${blog.id}/views`, {
+          method: "POST",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.counted) {
+            setViewCount((prev) => prev + 1);
+          }
+        }
+      } catch (error) {
+        console.error("Error tracking view:", error);
+      }
+    };
+
+    trackView();
+  }, [blog.id]);
 
   return (
     <article className="bg-card border border-border rounded-xl overflow-hidden">
@@ -103,7 +125,7 @@ export function BlogDetail({ blog }: BlogDetailProps) {
           </div>
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4" />
-            <span>{blog.viewCount} views</span>
+            <span>{viewCount} views</span>
           </div>
         </div>
 

@@ -83,3 +83,64 @@ export const blogSchema = z.object({
 });
 
 export type BlogSchemaType = z.infer<typeof blogSchema>;
+
+// Chapter Schemas
+export const chapterStatus = ["Draft", "Scheduled", "Published"] as const;
+
+export const chapterSchema = z.object({
+  name: z
+    .string()
+    .min(3, { message: "Name must be at least 3 characters long" })
+    .max(100, { message: "Name must be at most 100 characters long" }),
+  courseId: z.string().uuid({ message: "Course ID is required" }),
+  status: z.enum(chapterStatus, {
+    message: "Status is required",
+  }).optional(),
+  releaseAt: z.string().optional(),
+});
+
+export type ChapterSchemaType = z.infer<typeof chapterSchema>;
+
+// Lesson Schemas
+export const lessonStatus = ["Draft", "Scheduled", "Published"] as const;
+
+const assignmentSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  fileKey: z.string().optional(),
+  points: z.coerce.number().min(0).optional(),
+  dueDate: z.string().optional(),
+});
+
+const quizQuestionSchema = z.object({
+  question: z.string().min(1, { message: "Question is required" }),
+  options: z.array(z.string()).length(4, { message: "Must have exactly 4 options" }),
+  correctAnswer: z.number().min(0).max(3, { message: "Correct answer must be between 0 and 3" }),
+});
+
+const quizSchema = z.object({
+  title: z.string().optional(),
+  points: z.coerce.number().min(0).default(10).optional(),
+  required: z.boolean().default(true).optional(),
+  questions: z.array(quizQuestionSchema).optional(),
+});
+
+export const lessonSchema = z.object({
+  name: z
+    .string()
+    .min(3, { message: "Name must be at least 3 characters long" })
+    .max(100, { message: "Name must be at most 100 characters long" }),
+  courseId: z.string().uuid({ message: "Course ID is required" }),
+  chapterId: z.string().uuid({ message: "Chapter ID is required" }),
+  description: z.string().optional(),
+  videoKey: z.string().optional(),
+  thumbnailKey: z.string().optional(),
+  status: z.enum(lessonStatus, {
+    message: "Status is required",
+  }).optional(),
+  releaseAt: z.string().optional(),
+  assignment: assignmentSchema.optional(),
+  quiz: quizSchema.optional(),
+});
+
+export type LessonSchemaType = z.infer<typeof lessonSchema>;

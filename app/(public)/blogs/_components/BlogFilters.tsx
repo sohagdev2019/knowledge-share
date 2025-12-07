@@ -46,27 +46,27 @@ export function BlogFilters({ categories, currentCategory, currentSort }: BlogFi
   };
 
   return (
-    <div className="mb-8 space-y-4">
+    <div className="mb-6 sm:mb-8 space-y-4">
       {/* Search Bar */}
       <form onSubmit={handleSearch} className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search blogs..."
-          className="w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </form>
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
         {/* Category Filter */}
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 flex-1 sm:flex-initial min-w-0">
+          <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
           <select
             value={currentCategory || ""}
             onChange={(e) => handleCategoryChange(e.target.value)}
-            className="px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 text-sm sm:text-base border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
           >
             <option value="">All Categories</option>
             {categories.map((category) => (
@@ -81,7 +81,7 @@ export function BlogFilters({ categories, currentCategory, currentSort }: BlogFi
         <select
           value={currentSort || "newest"}
           onChange={(e) => handleSortChange(e.target.value)}
-          className="px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+          className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto"
         >
           <option value="newest">Newest</option>
           <option value="trending">Trending</option>

@@ -48,7 +48,7 @@ export default async function BlogsPage({
   return (
     <div className="min-h-screen bg-background">
       <BlogHero />
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
         {error === "insufficient_points" && (
           <div className="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
             <p className="font-semibold">Insufficient Points</p>
@@ -57,9 +57,9 @@ export default async function BlogsPage({
             </p>
           </div>
         )}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-8 xl:col-span-9">
             <BlogFilters categories={categories} currentCategory={categoryId} currentSort={sortBy} />
             <Suspense fallback={<div>Loading blogs...</div>}>
               <BlogFeed blogs={blogsData.blogs} total={blogsData.total} currentPage={page} hasMore={blogsData.hasMore} />
@@ -67,7 +67,7 @@ export default async function BlogsPage({
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-4 xl:col-span-3">
             <BlogSidebar featuredBlogs={featuredBlogs.blogs} trendingBlogs={trendingBlogs.blogs} categories={categories} />
           </div>
         </div>

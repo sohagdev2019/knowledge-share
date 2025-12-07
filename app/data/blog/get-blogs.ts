@@ -101,8 +101,43 @@ export async function getBlogs(params: GetBlogsParams = {}) {
     prisma.blog.count({ where }),
   ]);
 
+  // Get reaction counts for all blogs
+  const blogIds = blogs.map((blog) => blog.id);
+  const reactionCounts = await prisma.blogReaction.groupBy({
+    by: ["blogId", "type"],
+    where: {
+      blogId: {
+        in: blogIds,
+      },
+    },
+    _count: {
+      type: true,
+    },
+  });
+
+  // Map reaction counts to blogs
+  const blogsWithReactions = blogs.map((blog) => {
+    const reactions = reactionCounts.filter((r) => r.blogId === blog.id);
+    const reactionCountsByType = {
+      Like: 0,
+      Love: 0,
+      Insightful: 0,
+      Funny: 0,
+    };
+
+    reactions.forEach((reaction) => {
+      reactionCountsByType[reaction.type as keyof typeof reactionCountsByType] =
+        reaction._count.type;
+    });
+
+    return {
+      ...blog,
+      reactionCounts: reactionCountsByType,
+    };
+  });
+
   return {
-    blogs,
+    blogs: blogsWithReactions,
     total,
     hasMore: offset + limit < total,
   };

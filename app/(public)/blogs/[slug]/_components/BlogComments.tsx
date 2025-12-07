@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, Send, User } from "lucide-react";
+import { MessageCircle, Send, User, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "@/lib/date-utils";
 import Image from "next/image";
 import { useConstructUrl } from "@/hooks/use-construct-url";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Comment {
   id: string;
@@ -22,7 +23,7 @@ interface Comment {
     image: string | null;
     username: string | null;
   };
-  replies: Comment[];
+  replies?: Comment[];
 }
 
 interface BlogCommentsProps {
@@ -36,7 +37,13 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
   const [comment, setComment] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
-  const constructFileUrl = useConstructUrl();
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [isSubmittingReply, setIsSubmittingReply] = useState<string | null>(null);
+  
+  // Helper function to construct file URL
+  const constructFileUrl = (key: string) => {
+    return useConstructUrl(key);
+  };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +57,7 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
       return;
     }
 
+    setIsSubmittingComment(true);
     try {
       const response = await fetch(`/api/blogs/${blogId}/comments`, {
         method: "POST",
@@ -68,6 +76,8 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
       }
     } catch (error) {
       toast.error("An error occurred");
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -82,6 +92,7 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
       return;
     }
 
+    setIsSubmittingReply(parentId);
     try {
       const response = await fetch(`/api/blogs/${blogId}/comments`, {
         method: "POST",
@@ -95,7 +106,7 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
         setComments((prev) =>
           prev.map((c) =>
             c.id === parentId
-              ? { ...c, replies: [...c.replies, data.comment] }
+              ? { ...c, replies: [...(c.replies || []), data.comment] }
               : c
           )
         );
@@ -107,6 +118,8 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
       }
     } catch (error) {
       toast.error("An error occurred");
+    } finally {
+      setIsSubmittingReply(null);
     }
   };
 
@@ -119,27 +132,55 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
 
       {/* Comment Form */}
       {session ? (
-        <form onSubmit={handleSubmitComment} className="mb-8">
+        <motion.form 
+          onSubmit={handleSubmitComment} 
+          className="mb-8"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Write a comment..."
             rows={4}
             className="mb-3"
+            disabled={isSubmittingComment}
           />
-          <Button type="submit">
+          <Button type="submit" disabled={isSubmittingComment}>
+            {isSubmittingComment ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Posting...
+              </>
+            ) : (
+              <>
             <Send className="w-4 h-4 mr-2" />
             Post Comment
+              </>
+            )}
           </Button>
-        </form>
+        </motion.form>
       ) : (
         <p className="text-muted-foreground mb-6">Please login to comment</p>
       )}
 
       {/* Comments List */}
       <div className="space-y-6">
-        {comments.map((comment) => (
-          <div key={comment.id} className="border-b border-border pb-6 last:border-0">
+        <AnimatePresence mode="popLayout">
+          {comments.map((comment, index) => (
+            <motion.div
+              key={comment.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ 
+                duration: 0.4,
+                delay: index === 0 ? 0.1 : 0,
+                ease: [0.4, 0, 0.2, 1]
+              }}
+              className="border-b border-border pb-6 last:border-0"
+            >
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 {comment.author.image ? (
@@ -177,18 +218,37 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
                     Reply
                   </Button>
                 )}
+                <AnimatePresence>
                 {replyingTo === comment.id && (
-                  <div className="mt-3">
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="mt-3 overflow-hidden"
+                    >
                     <Textarea
                       value={replyContent}
                       onChange={(e) => setReplyContent(e.target.value)}
                       placeholder="Write a reply..."
                       rows={2}
                       className="mb-2"
+                        disabled={isSubmittingReply === comment.id}
                     />
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleReply(comment.id)}>
-                        Post Reply
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleReply(comment.id)}
+                          disabled={isSubmittingReply === comment.id}
+                        >
+                          {isSubmittingReply === comment.id ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                              Posting...
+                            </>
+                          ) : (
+                            "Post Reply"
+                          )}
                       </Button>
                       <Button
                         size="sm"
@@ -197,16 +257,25 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
                           setReplyingTo(null);
                           setReplyContent("");
                         }}
+                          disabled={isSubmittingReply === comment.id}
                       >
                         Cancel
                       </Button>
                     </div>
-                  </div>
+                    </motion.div>
                 )}
-                {comment.replies.length > 0 && (
+                </AnimatePresence>
+                {comment.replies && comment.replies.length > 0 && (
                   <div className="mt-4 ml-6 space-y-4 border-l-2 border-border pl-4">
+                    <AnimatePresence mode="popLayout">
                     {comment.replies.map((reply) => (
-                      <div key={reply.id}>
+                        <motion.div
+                          key={reply.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.3, ease: "easeOut" }}
+                        >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold text-sm">
                             {reply.author.firstName} {reply.author.lastName}
@@ -216,14 +285,16 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
                           </span>
                         </div>
                         <p className="text-sm text-foreground">{reply.content}</p>
-                      </div>
+                        </motion.div>
                     ))}
+                    </AnimatePresence>
                   </div>
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
+        </AnimatePresence>
         {comments.length === 0 && (
           <p className="text-center text-muted-foreground py-8">No comments yet. Be the first to comment!</p>
         )}

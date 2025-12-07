@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, Heart, MessageCircle, Eye, User } from "lucide-react";
+import { Clock, Heart, MessageCircle, Eye, User, Lightbulb, Laugh } from "lucide-react";
 import { useConstructUrl } from "@/hooks/use-construct-url";
 import { formatDistanceToNow } from "@/lib/date-utils";
 
@@ -17,6 +17,12 @@ interface Blog {
   likeCount: number;
   commentCount: number;
   createdAt: Date;
+  reactionCounts?: {
+    Like: number;
+    Love: number;
+    Insightful: number;
+    Funny: number;
+  };
   author: {
     id: string;
     firstName: string;
@@ -40,7 +46,7 @@ interface BlogFeedProps {
 }
 
 export function BlogFeed({ blogs, total, currentPage, hasMore }: BlogFeedProps) {
-  const constructFileUrl = useConstructUrl();
+  const constructFileUrl = (key: string) => useConstructUrl(key);
 
   if (blogs.length === 0) {
     return (
@@ -52,59 +58,90 @@ export function BlogFeed({ blogs, total, currentPage, hasMore }: BlogFeedProps) 
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {blogs.map((blog) => (
           <Link
             key={blog.id}
             href={`/blogs/${blog.slug}`}
-            className="group block bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
+            className="group block bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 w-full"
           >
             {blog.coverImageKey && (
-              <div className="relative w-full h-48 overflow-hidden">
+              <div className="relative w-full h-40 sm:h-48 md:h-52 overflow-hidden">
                 <Image
                   src={constructFileUrl(blog.coverImageKey)}
                   alt={blog.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               </div>
             )}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {blog.category && (
                 <span className="inline-block px-3 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-full mb-3">
                   {blog.category.name}
                 </span>
               )}
-              <h2 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
                 {blog.title}
               </h2>
               {blog.excerpt && (
                 <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{blog.excerpt}</p>
               )}
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-muted-foreground">
+                <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                   <div className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    <span>
+                    <User className="w-4 h-4 shrink-0" />
+                    <span className="truncate max-w-[120px] sm:max-w-none">
                       {blog.author.firstName} {blog.author.lastName}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
+                    <Clock className="w-4 h-4 shrink-0" />
                     <span>{blog.readingTime} min</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <div className="flex items-center gap-1">
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-4 h-4 shrink-0" />
                     <span>{blog.viewCount}</span>
                   </div>
+                  {blog.reactionCounts && (
+                    <>
+                      {blog.reactionCounts.Like > 0 && (
+                        <div className="flex items-center gap-1" title="Likes">
+                          <Heart className="w-4 h-4 shrink-0" />
+                          <span>{blog.reactionCounts.Like}</span>
+                        </div>
+                      )}
+                      {blog.reactionCounts.Love > 0 && (
+                        <div className="flex items-center gap-1" title="Love">
+                          <Heart className="w-4 h-4 shrink-0 fill-pink-500 text-pink-500" />
+                          <span>{blog.reactionCounts.Love}</span>
+                        </div>
+                      )}
+                      {blog.reactionCounts.Insightful > 0 && (
+                        <div className="flex items-center gap-1" title="Insightful">
+                          <Lightbulb className="w-4 h-4 shrink-0" />
+                          <span>{blog.reactionCounts.Insightful}</span>
+                        </div>
+                      )}
+                      {blog.reactionCounts.Funny > 0 && (
+                        <div className="flex items-center gap-1" title="Funny">
+                          <Laugh className="w-4 h-4 shrink-0" />
+                          <span>{blog.reactionCounts.Funny}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {!blog.reactionCounts && blog.likeCount > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Heart className="w-4 h-4 shrink-0" />
+                      <span>{blog.likeCount}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1">
-                    <Heart className="w-4 h-4" />
-                    <span>{blog.likeCount}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageCircle className="w-4 h-4" />
+                    <MessageCircle className="w-4 h-4 shrink-0" />
                     <span>{blog.commentCount}</span>
                   </div>
                 </div>
