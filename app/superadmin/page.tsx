@@ -49,10 +49,8 @@ async function RenderRecentCourses() {
   if (data.length === 0) {
     return (
       <EmptyState
-        buttonText="Create new Course"
-        description="you dont have any courses. create some to see them here"
+        description="No courses available"
         title="You dont have any courses yet!"
-        href="/superadmin/courses/create"
       />
     );
   }

@@ -23,7 +23,7 @@ const instructorItems = [
   { name: "Instructors List", href: "#" },
 ];
 
-const studentItems = [{ name: "Students Gallery", href: "#" }];
+const studentItems = [{ name: "Students Gallery", href: "/students-gallery" }];
 
 function useHoverMenu(delay = 120) {
   const [open, setOpen] = useState(false);

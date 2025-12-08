@@ -33,6 +33,8 @@ export function NavUser() {
   const { data: session, status } = useSession();
   const isPending = status === "loading";
   const handleSignOut = useSignOut();
+  const userRole = (session?.user as { role?: string } | undefined)?.role;
+  const isSuperAdmin = userRole === "superadmin";
 
   if (isPending) {
     return null;
@@ -120,17 +122,19 @@ export function NavUser() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/admin">
+                <Link href={isSuperAdmin ? "/superadmin" : "/admin"}>
                   <IconDashboard />
                   Dashboard
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/courses">
-                  <Tv2 />
-                  Courses
-                </Link>
-              </DropdownMenuItem>
+              {!isSuperAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/courses">
+                    <Tv2 />
+                    Courses
+                  </Link>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>

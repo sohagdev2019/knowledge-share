@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 export function NavMain({
   items,
@@ -23,10 +24,14 @@ export function NavMain({
   }[];
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string } | undefined)?.role;
+  const isSuperAdmin = userRole === "superadmin";
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
-        {(pathname.startsWith("/admin") || pathname.startsWith("/superadmin")) && (
+        {(pathname.startsWith("/admin") || pathname.startsWith("/superadmin")) && !isSuperAdmin && (
           <SidebarMenu>
             <SidebarMenuItem className="flex items-center gap-2">
               <SidebarMenuButton

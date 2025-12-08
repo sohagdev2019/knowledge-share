@@ -14,10 +14,6 @@ export default function SuperAdminCoursesPage() {
     <>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Your Courses</h1>
-
-        <Link className={buttonVariants()} href="/superadmin/courses/create">
-          Create Course
-        </Link>
       </div>
 
       <Suspense fallback={<AdminCourseCardSkeletonLayout />}>
@@ -36,9 +32,7 @@ async function RenderCourses() {
       {data.length === 0 ? (
         <EmptyState
           title="No courses found"
-          description="Create a new course to get started"
-          buttonText="Create Course"
-          href="/superadmin/courses/create"
+          description="No courses available"
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-7">
