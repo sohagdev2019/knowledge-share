@@ -1,4 +1,3 @@
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { getBlogs } from "@/app/data/blog/get-blogs";
 import { BlogStatus } from "@/lib/generated/prisma";
 import { BlogManagementTable } from "./_components/BlogManagementTable";
@@ -14,7 +13,7 @@ export default async function SuperAdminBlogsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  await requireSuperAdmin();
+  // requireSuperAdmin is already called in layout, no need to call again
   const userRole = await getUserRole();
   const params = await searchParams;
   const status = (params.status as BlogStatus) || BlogStatus.Pending;

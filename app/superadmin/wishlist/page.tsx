@@ -1,4 +1,3 @@
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { WishlistGrid } from "./_components/WishlistGrid";
 import coverImage from "@/public/assets/images/image.png";
 
@@ -66,7 +65,7 @@ const demoWishlist = [
 ] as const;
 
 export default async function SuperAdminWishlistPage() {
-  await requireSuperAdmin();
+  // requireSuperAdmin is already called in layout, no need to call again
 
   return (
     <div className="space-y-8">

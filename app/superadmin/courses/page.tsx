@@ -1,4 +1,3 @@
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { adminGetCourses } from "@/app/data/admin/admin-get-courses";
 import { buttonVariants } from "@/components/ui/button";
 import Link from "next/link";
@@ -24,7 +23,7 @@ export default function SuperAdminCoursesPage() {
 }
 
 async function RenderCourses() {
-  await requireSuperAdmin();
+  // requireSuperAdmin is already called in layout, no need to call again
   const data = await adminGetCourses();
 
   return (

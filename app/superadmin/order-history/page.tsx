@@ -1,6 +1,5 @@
 "use server";
 
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { OrderHistoryTable } from "@/app/dashboard/orders/_components/OrderHistoryTable";
 
 const demoOrders = [
@@ -63,7 +62,7 @@ const demoOrders = [
 ];
 
 export default async function SuperAdminOrderHistoryPage() {
-  await requireSuperAdmin();
+  // requireSuperAdmin is already called in layout, no need to call again
 
   return (
     <div className="space-y-8">

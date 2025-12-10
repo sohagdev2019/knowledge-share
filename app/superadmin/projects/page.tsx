@@ -1,6 +1,5 @@
 "use server";
 
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { ProjectsPageClient } from "./_components/ProjectsPageClient";
 
 const demoProjects = [
@@ -67,7 +66,6 @@ const demoProjects = [
 ];
 
 export default async function SuperAdminProjectsPage() {
-  await requireSuperAdmin();
-
+  // requireSuperAdmin is already called in layout, no need to call again
   return <ProjectsPageClient projects={demoProjects} />;
 }

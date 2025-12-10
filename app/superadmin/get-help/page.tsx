@@ -1,6 +1,5 @@
 "use server";
 
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { IconMail, IconMessageCircle, IconPhone, IconHelpCircle } from "@tabler/icons-react";
 
 export default async function SuperAdminGetHelpPage() {
-  await requireSuperAdmin();
+  // requireSuperAdmin is already called in layout, no need to call again
 
   return (
     <div className="space-y-8">

@@ -1,4 +1,3 @@
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { prisma } from "@/lib/db";
 import { TeamPageClient } from "./_components/TeamPageClient";
 
@@ -12,7 +11,7 @@ export default async function SuperAdminTeamPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  await requireSuperAdmin();
+  // requireSuperAdmin is already called in layout, no need to call again
   const params = await searchParams;
   const page = parseInt(params.page || "1");
   const search = params.search || "";

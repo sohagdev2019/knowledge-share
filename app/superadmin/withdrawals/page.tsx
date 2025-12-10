@@ -1,10 +1,9 @@
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { EarningsCards } from "./_components/EarningsCards";
 import { WithdrawalSection } from "./_components/WithdrawalSection";
 import { WithdrawalHistoryTable } from "./_components/WithdrawalHistoryTable";
 
 export default async function SuperAdminWithdrawalsPage() {
-  await requireSuperAdmin();
+  // requireSuperAdmin is already called in layout, no need to call again
 
   return (
     <div className="space-y-8">

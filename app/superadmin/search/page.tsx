@@ -1,6 +1,5 @@
 "use server";
 
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { SearchPageClient } from "./_components/SearchPageClient";
 
 const demoResults = [
@@ -28,7 +27,6 @@ const demoResults = [
 ];
 
 export default async function SuperAdminSearchPage() {
-  await requireSuperAdmin();
-
+  // requireSuperAdmin is already called in layout, no need to call again
   return <SearchPageClient demoResults={demoResults} />;
 }

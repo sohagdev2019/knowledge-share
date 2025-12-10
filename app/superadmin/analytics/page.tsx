@@ -1,4 +1,3 @@
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { AnalyticsPageClient } from "./_components/AnalyticsPageClient";
 import {
   superadminGetPlatformOverview,
@@ -12,7 +11,7 @@ import {
 } from "@/app/data/admin/superadmin-get-analytics";
 
 export default async function SuperAdminAnalyticsPage() {
-  await requireSuperAdmin();
+  // requireSuperAdmin is already called in layout, no need to call again
 
   // Fetch all analytics data in parallel
   const [

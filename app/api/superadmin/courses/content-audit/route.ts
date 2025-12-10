@@ -90,24 +90,6 @@ export async function GET() {
           { videoKey: "" },
         ],
       },
-      include: {
-        Chapter: {
-          include: {
-            Course: {
-              select: {
-                id: true,
-                title: true,
-                user: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
       select: {
         id: true,
         title: true,
@@ -135,19 +117,43 @@ export async function GET() {
       unpublishedCourses,
       incompleteCourses,
       coursesMissingThumbnails,
-      lessonsWithoutVideos: lessonsWithoutVideos.map((lesson) => ({
-        lessonId: lesson.id,
-        lessonTitle: lesson.title,
-        courseId: lesson.Chapter.Course.id,
-        courseTitle: lesson.Chapter.Course.title,
-        teacher: `${lesson.Chapter.Course.user.firstName} ${lesson.Chapter.Course.user.lastName || ""}`.trim(),
-      })),
+      lessonsWithoutVideos: lessonsWithoutVideos
+        .filter((lesson) => lesson.Chapter?.Course) // Filter out lessons without valid chapter/course
+        .map((lesson) => ({
+          lessonId: lesson.id,
+          lessonTitle: lesson.title,
+          courseId: lesson.Chapter!.Course.id,
+          courseTitle: lesson.Chapter!.Course.title,
+          teacher: `${lesson.Chapter!.Course.user.firstName} ${lesson.Chapter!.Course.user.lastName || ""}`.trim(),
+        })),
     });
-  } catch (error) {
-    console.error("Failed to fetch content audit:", error);
+  } catch (error: any) {
+    console.error("Failed to fetch content audit:", {
+      message: error?.message,
+      stack: error?.stack,
+      digest: error?.digest,
+      name: error?.name,
+    });
+    
+    // Handle redirect errors (from requireSuperAdmin) - these indicate authentication/authorization failures
+    if (error?.digest?.startsWith("NEXT_REDIRECT")) {
+      return NextResponse.json(
+        { error: "Unauthorized. Super admin access required." },
+        { status: 403 }
+      );
+    }
+
+    // Return more detailed error information in development
+    const errorMessage = process.env.NODE_ENV === "development" 
+      ? error?.message || error?.toString() || "Failed to fetch content audit"
+      : "Failed to fetch content audit";
+
     return NextResponse.json(
-      { error: "Failed to fetch content audit" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === "development" ? String(error) : undefined
+      },
+      { status: error?.status || 500 }
     );
   }
 }

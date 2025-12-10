@@ -1,6 +1,5 @@
 "use server";
 
-import { requireSuperAdmin } from "@/app/data/admin/require-superadmin";
 import { ReviewsList } from "./_components/ReviewsList";
 
 const sampleNames = [
@@ -50,7 +49,7 @@ const demoReviews = Array.from({ length: 15 }).map((_, index) => ({
 }));
 
 export default async function SuperAdminReviewsPage() {
-  await requireSuperAdmin();
+  // requireSuperAdmin is already called in layout, no need to call again
 
   return (
     <div className="space-y-8">

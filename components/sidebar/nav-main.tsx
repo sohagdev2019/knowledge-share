@@ -13,6 +13,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { useTransition } from "react";
 
 export function NavMain({
   items,
@@ -39,7 +40,10 @@ export function NavMain({
                 tooltip="Quick Create"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
               >
-                <Link href={pathname.startsWith("/superadmin") ? "/superadmin/courses/create" : "/admin/courses/create"}>
+                <Link 
+                  href={pathname.startsWith("/superadmin") ? "/superadmin/courses/create" : "/admin/courses/create"}
+                  prefetch={true}
+                >
                   <IconCirclePlusFilled />
                   <span>Quick Create</span>
                 </Link>
@@ -53,6 +57,7 @@ export function NavMain({
               <SidebarMenuButton tooltip={item.title} asChild>
                 <Link
                   href={item.url}
+                  prefetch={true}
                   className={cn(
                     pathname === item.url && "bg-accent text-accent-foreground"
                   )}
