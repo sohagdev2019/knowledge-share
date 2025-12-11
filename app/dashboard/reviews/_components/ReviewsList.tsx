@@ -2,31 +2,90 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { IconStarFilled } from "@tabler/icons-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { HalfStarRating } from "./HalfStarRating";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import { EditReviewModal } from "./EditReviewModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { tryCatch } from "@/hooks/try-catch";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 type Review = {
   id: string;
+  userId: string;
   name: string;
   avatar: string;
   timeAgo: string;
   rating: number;
   content: string;
+  createdAt: string;
+  courseId: string;
+  courseTitle: string;
 };
 
 type ReviewsListProps = {
   reviews: readonly Review[];
+  currentUserId: string;
   pageSize?: number;
 };
 
-export function ReviewsList({ reviews, pageSize = 3 }: ReviewsListProps) {
+export function ReviewsList({ reviews, currentUserId, pageSize = 3 }: ReviewsListProps) {
   const [page, setPage] = useState(1);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
   const totalPages = Math.ceil(reviews.length / pageSize);
   const pageReviews = reviews.slice((page - 1) * pageSize, page * pageSize);
 
   const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
   const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
   const goToPage = (index: number) => setPage(index);
+
+  const canEditOrDelete = (review: Review) => {
+    if (review.userId !== currentUserId) return false;
+    const reviewDate = new Date(review.createdAt);
+    const now = new Date();
+    const hoursSinceCreation = (now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60);
+    return hoursSinceCreation <= 24;
+  };
+
+  const handleDelete = () => {
+    if (!deletingReviewId) return;
+
+    startTransition(async () => {
+      const { data: result, error } = await tryCatch(
+        fetch(`/api/reviews/${deletingReviewId}`, {
+          method: "DELETE",
+        }).then((res) => res.json())
+      );
+
+      if (error) {
+        toast.error("An unexpected error occurred. Please try again.");
+        return;
+      }
+
+      if (result.status === "success") {
+        toast.success(result.message);
+        setDeletingReviewId(null);
+        router.refresh();
+      } else if (result.status === "error") {
+        toast.error(result.message);
+      }
+    });
+  };
 
   return (
     <div className="space-y-4 rounded-3xl border border-border/60 bg-background shadow-lg shadow-black/5">
@@ -92,21 +151,70 @@ export function ReviewsList({ reviews, pageSize = 3 }: ReviewsListProps) {
                   <p className="text-sm text-muted-foreground">{review.timeAgo}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, starIndex) => (
-                  <IconStarFilled
-                    key={starIndex}
-                    className={`size-4 ${
-                      starIndex < review.rating ? "text-amber-400" : "text-border"
-                    }`}
-                  />
-                ))}
+              <div className="flex items-center gap-2">
+                <HalfStarRating
+                  rating={review.rating}
+                  onRatingChange={() => {}}
+                  readOnly
+                  size={16}
+                />
+                {canEditOrDelete(review) && (
+                  <div className="flex items-center gap-1 ml-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setEditingReview(review)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => setDeletingReviewId(review.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">{review.content}</p>
+            {review.content && (
+              <p className="text-sm leading-relaxed text-muted-foreground">{review.content}</p>
+            )}
           </motion.article>
         ))}
       </div>
+
+      {editingReview && (
+        <EditReviewModal
+          review={editingReview}
+          open={!!editingReview}
+          onOpenChange={(open) => !open && setEditingReview(null)}
+        />
+      )}
+
+      <AlertDialog open={!!deletingReviewId} onOpenChange={(open) => !open && setDeletingReviewId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Review</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this review? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={pending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {pending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

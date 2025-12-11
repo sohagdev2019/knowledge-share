@@ -10,3 +10,6 @@ export default async function StudentAnnouncementsPage() {
 
   return <StudentAnnouncementsClient initialAnnouncements={announcements} />;
 }
+
+
+

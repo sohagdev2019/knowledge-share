@@ -1,11 +1,19 @@
 import { PrismaClient } from "./generated/prisma";
+import { env } from "./env";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 // Optimize DATABASE_URL for Neon connection pooling
 // Neon pooler requires specific connection string format
 function getOptimizedDatabaseUrl(): string {
-  const dbUrl = process.env.DATABASE_URL || "";
+  // Use validated DATABASE_URL from env.ts to ensure it's set and valid
+  const dbUrl = env.DATABASE_URL;
+  
+  if (!dbUrl || dbUrl.trim() === "") {
+    throw new Error(
+      "DATABASE_URL is not set or is empty. Please check your environment variables."
+    );
+  }
   
   // If using Neon and URL doesn't already have pooler params, add them
   if (dbUrl.includes("neon.tech") && !dbUrl.includes("?") && !dbUrl.includes("pooler")) {
@@ -31,13 +39,25 @@ function getOptimizedDatabaseUrl(): string {
   return dbUrl;
 }
 
+// Get optimized database URL and validate it
+let optimizedDatabaseUrl: string;
+try {
+  optimizedDatabaseUrl = getOptimizedDatabaseUrl();
+} catch (error) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  throw new Error(
+    `Failed to initialize database connection: ${errorMessage}\n` +
+    `Please ensure DATABASE_URL is set in your environment variables.`
+  );
+}
+
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn", "query"] : ["error"],
     datasources: {
       db: {
-        url: getOptimizedDatabaseUrl(),
+        url: optimizedDatabaseUrl,
       },
     },
     // Note: Connection pool settings are configured via connection string parameters

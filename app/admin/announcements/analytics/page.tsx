@@ -10,3 +10,6 @@ export default async function AnnouncementsAnalyticsPage() {
 
   return <AnnouncementsAnalyticsClient announcements={announcements} />;
 }
+
+
+

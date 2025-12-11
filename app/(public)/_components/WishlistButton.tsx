@@ -6,29 +6,62 @@ import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface WishlistButtonProps {
   courseId: string;
   className?: string;
+  initialWishlisted?: boolean;
 }
 
-export function WishlistButton({ courseId, className }: WishlistButtonProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+export function WishlistButton({ courseId, className, initialWishlisted }: WishlistButtonProps) {
+  const [isWishlisted, setIsWishlisted] = useState(initialWishlisted ?? false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showRipple, setShowRipple] = useState(false);
   const [buttonScale, setButtonScale] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    // Check if course is in wishlist from localStorage
-    if (typeof window !== "undefined") {
-      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
-      setIsWishlisted(wishlist.includes(courseId));
+    // Check initial state from prop first
+    if (initialWishlisted !== undefined) {
+      setIsWishlisted(initialWishlisted);
+      return;
     }
-  }, [courseId]);
+    
+    // Check server state for authenticated users
+    const checkWishlistStatus = async () => {
+      try {
+        const response = await fetch(`/api/wishlist/${courseId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsWishlisted(data.isWishlisted ?? false);
+          // Sync localStorage with server state
+          if (typeof window !== "undefined") {
+            const wishlist: string[] = JSON.parse(localStorage.getItem("wishlist") || "[]");
+            if (data.isWishlisted && !wishlist.includes(courseId)) {
+              localStorage.setItem("wishlist", JSON.stringify([...wishlist, courseId]));
+            } else if (!data.isWishlisted && wishlist.includes(courseId)) {
+              localStorage.setItem("wishlist", JSON.stringify(wishlist.filter(id => id !== courseId)));
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to check wishlist status:", error);
+        // Fallback to localStorage on error
+        if (typeof window !== "undefined") {
+          const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+          setIsWishlisted(wishlist.includes(courseId));
+        }
+      }
+    };
+    
+    checkWishlistStatus();
+  }, [courseId, initialWishlisted]);
 
   const toggleWishlist = async () => {
-    if (typeof window === "undefined" || isAnimating) return;
+    if (typeof window === "undefined" || isAnimating || isLoading) return;
 
     const willBeWishlisted = !isWishlisted;
     const adding = !isWishlisted;
@@ -36,38 +69,55 @@ export function WishlistButton({ courseId, className }: WishlistButtonProps) {
     setIsAnimating(true);
     setShowRipple(true);
     setIsAdding(adding);
+    setIsLoading(true);
     
     // Immediate visual feedback with smooth scale animation
     setButtonScale(0.85);
     setTimeout(() => setButtonScale(1.15), 50);
     setTimeout(() => setButtonScale(1), 200);
     
-    const wishlist: string[] = JSON.parse(localStorage.getItem("wishlist") || "[]");
-    
-    let newWishlist: string[];
-    let message: string;
+    try {
+      // Optimistic update
+      setIsWishlisted(willBeWishlisted);
+      
+      const response = await fetch(`/api/wishlist/${courseId}`, {
+        method: willBeWishlisted ? "POST" : "DELETE",
+      });
 
-    if (isWishlisted) {
-      newWishlist = wishlist.filter((id) => id !== courseId);
-      message = "Removed from wishlist";
-    } else {
-      newWishlist = [...wishlist, courseId];
-      message = "Added to wishlist ✨";
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Failed to update wishlist" }));
+        throw new Error(error.error || "Failed to update wishlist");
+      }
+
+      // Update localStorage for quick access
+      const wishlist: string[] = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      const newWishlist = willBeWishlisted 
+        ? [...wishlist.filter((id) => id !== courseId), courseId]
+        : wishlist.filter((id) => id !== courseId);
+      localStorage.setItem("wishlist", JSON.stringify(newWishlist));
+
+      const message = willBeWishlisted ? "Added to wishlist ✨" : "Removed from wishlist";
+      toast.success(message, {
+        duration: 2000,
+        position: "top-center",
+      });
+
+      // Refresh the page to sync server state if on wishlist page
+      if (window.location.pathname === "/dashboard/wishlist") {
+        router.refresh();
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setIsWishlisted(!willBeWishlisted);
+      toast.error(error instanceof Error ? error.message : "Failed to update wishlist");
+    } finally {
+      setTimeout(() => {
+        setIsAnimating(false);
+        setShowRipple(false);
+        setIsAdding(false);
+        setIsLoading(false);
+      }, 800);
     }
-
-    localStorage.setItem("wishlist", JSON.stringify(newWishlist));
-    setIsWishlisted(willBeWishlisted);
-
-    toast.success(message, {
-      duration: 2000,
-      position: "top-center",
-    });
-
-    setTimeout(() => {
-      setIsAnimating(false);
-      setShowRipple(false);
-      setIsAdding(false);
-    }, 800);
   };
 
   return (

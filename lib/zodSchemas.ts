@@ -144,3 +144,13 @@ export const lessonSchema = z.object({
 });
 
 export type LessonSchemaType = z.infer<typeof lessonSchema>;
+
+// Assignment Submission Schema
+export const assignmentSubmissionSchema = z.object({
+  assignmentId: z.string().uuid({ message: "Assignment ID is required" }),
+  fileKey: z.string().optional(),
+  link: z.string().optional(),
+  description: z.string().optional(),
+});
+
+export type AssignmentSubmissionSchemaType = z.infer<typeof assignmentSubmissionSchema>;
