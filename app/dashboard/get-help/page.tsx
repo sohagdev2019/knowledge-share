@@ -1,12 +1,16 @@
 "use server";
 
-import { requireAdmin } from "@/app/data/admin/require-admin";
+import { requireUser } from "@/app/data/user/require-user";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { IconMail, IconPhone } from "@tabler/icons-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { IconMail, IconMessageCircle, IconPhone, IconHelpCircle } from "@tabler/icons-react";
 import { HelpRequestForm } from "./_components/HelpRequestForm";
 
 export default async function GetHelpPage() {
-  const session = await requireAdmin();
+  const session = await requireUser();
 
   return (
     <div className="space-y-8">
@@ -27,10 +31,22 @@ export default async function GetHelpPage() {
           actionLabel="support@knowledgeshare.com"
         />
         <SupportCard
+          title="Live chat"
+          description="Talk to our success engineers"
+          icon={<IconMessageCircle className="h-5 w-5" />}
+          actionLabel="Start chat"
+        />
+        <SupportCard
           title="Hotline"
           description="Weekdays 8AM-6PM (EST)"
           icon={<IconPhone className="h-5 w-5" />}
           actionLabel="+1 (650) 555-0199"
+        />
+        <SupportCard
+          title="Docs & FAQ"
+          description="Guides, tutorials, and release notes"
+          icon={<IconHelpCircle className="h-5 w-5" />}
+          actionLabel="Browse resources"
         />
       </div>
 
@@ -41,10 +57,8 @@ export default async function GetHelpPage() {
         </CardHeader>
         <CardContent>
           <HelpRequestForm 
-            userEmail={(session.user as any).email || ""}
-            userName={(session.user as any).firstName 
-              ? `${(session.user as any).firstName} ${(session.user as any).lastName || ""}`.trim() 
-              : (session.user as any).email || ""}
+            userEmail={session.email}
+            userName={session.firstName ? `${session.firstName} ${session.lastName || ""}`.trim() : session.email}
           />
         </CardContent>
       </Card>
@@ -79,4 +93,5 @@ function SupportCard({
     </Card>
   );
 }
+
 

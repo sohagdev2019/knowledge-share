@@ -7,7 +7,6 @@ import {
   IconFileAi,
   IconFileDescription,
   IconHelp,
-  IconSearch,
   IconSettings,
   IconUserCircle,
   IconHeart,
@@ -116,13 +115,8 @@ const data = {
     },
     {
       title: "Get Help",
-      url: "#",
+      url: "/dashboard/get-help",
       icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
     },
   ],
 };

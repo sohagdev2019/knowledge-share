@@ -2,141 +2,227 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Clock, Users, Award, BookOpen } from "lucide-react";
 import { useRevealOnScroll } from "@/hooks/use-reveal-on-scroll";
+
+const traditionalLearningTexts = [
+  "traditional learning",
+  "online courses",
+  "self-paced study",
+  "interactive education",
+];
 
 export default function Hero() {
   const { ref, isVisible: inView } = useRevealOnScroll<HTMLElement>();
   const [isVisible, setIsVisible] = useState(false);
+  const [currentTraditionalIndex, setCurrentTraditionalIndex] = useState(0);
+  const [isTraditionalAnimating, setIsTraditionalAnimating] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (inView) {
-      const timer = setTimeout(() => setIsVisible(true), 100);
+      const timer = setTimeout(() => setIsVisible(true), 150);
       return () => clearTimeout(timer);
     }
   }, [inView]);
 
+  useEffect(() => {
+    if (!isVisible || !mounted) return;
+
+    const interval = setInterval(() => {
+      setIsTraditionalAnimating(true);
+      setTimeout(() => {
+        setCurrentTraditionalIndex((prev) => (prev + 1) % traditionalLearningTexts.length);
+        setTimeout(() => {
+          setIsTraditionalAnimating(false);
+        }, 50);
+      }, 200);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isVisible, mounted]);
+
   return (
     <section
       ref={ref}
-      className="relative py-12 md:py-16 overflow-hidden transition-colors duration-300"
+      className="relative py-16 md:py-24 overflow-hidden  text-white"
     >
-      <div className="container mx-auto px-4 md:px-6 lg:px-8">
-        <div className="flex flex-col items-center text-center space-y-6 max-w-3xl mx-auto">
-          {/* Main headline - two lines with staggered animation */}
-          <div className="flex flex-col items-center space-y-1">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
-              <span
-                className={`block text-primary transition-all duration-700 ease-out ${
-                  isVisible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-6"
-                }`}
-                style={{ transitionDelay: "0.1s" }}
-              >
-                Master New Skills
-              </span>
-              <span
-                className={`block text-slate-900 dark:text-white transition-all duration-700 ease-out ${
-                  isVisible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-6"
-                }`}
-                style={{ transitionDelay: "0.25s" }}
-              >
-                Transform Your Future
-              </span>
-            </h1>
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 opacity-30">
+        <div
+          className={`absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl transition-all duration-2000 ${
+            isVisible ? "opacity-100 scale-100" : "opacity-0 scale-50"
+          }`}
+          style={{
+            transitionDelay: "0.5s",
+            animation: isVisible ? "float 6s ease-in-out infinite" : "none",
+          }}
+        />
+        <div
+          className={`absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl transition-all duration-2000 ${
+            isVisible ? "opacity-100 scale-100" : "opacity-0 scale-50"
+          }`}
+          style={{
+            transitionDelay: "0.8s",
+            animation: isVisible ? "float 8s ease-in-out infinite reverse" : "none",
+          }}
+        />
+      </div>
 
-            {/* Description text with fade-in animation */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes float {
+            0%, 100% {
+              transform: translateY(0px) translateX(0px);
+            }
+            50% {
+              transform: translateY(-20px) translateX(10px);
+            }
+          }
+          @keyframes shimmer {
+            0% {
+              background-position: -200% center;
+            }
+            100% {
+              background-position: 200% center;
+            }
+          }
+          @keyframes glow {
+            0%, 100% {
+              text-shadow: 0 0 20px rgba(255, 255, 255, 0.1),
+                           0 0 40px rgba(255, 255, 255, 0.1);
+            }
+            50% {
+              text-shadow: 0 0 30px rgba(255, 255, 255, 0.2),
+                           0 0 60px rgba(255, 255, 255, 0.15);
+            }
+          }
+          @keyframes pulse-on-hover {
+            0%, 100% {
+              box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+            }
+            50% {
+              box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+            }
+          }
+          .animate-pulse-on-hover:hover {
+            animation: pulse-on-hover 1.5s ease-in-out infinite;
+          }
+        `
+      }} />
+
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
+        <div className="flex flex-col items-center text-center space-y-4 md:space-y-6 max-w-4xl mx-auto">
+          {/* Top alternative text with smooth fade and scale animation */}
+          <p
+            className={`text-sm md:text-base text-gray-400 dark:text-gray-400 mb-4 transition-all duration-1200 ${
+              isVisible
+                ? "opacity-100 translate-y-0 scale-100"
+                : "opacity-0 translate-y-6 scale-95"
+            }`}
+            style={{
+              transitionDelay: "0.15s",
+              transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+          >
+            An alternative to{" "}
+            <span className="inline-flex items-center">
+              <span className="inline-block w-[180px] text-left">
+                <span
+                  className={`inline-block text-gray-300 dark:text-gray-300 font-medium transition-all duration-200 ${
+                    isTraditionalAnimating
+                      ? "opacity-0 translate-y-2"
+                      : "opacity-100 translate-y-0"
+                  }`}
+                >
+                  {traditionalLearningTexts[currentTraditionalIndex]}
+                </span>
+              </span>
+            </span>
+          </p>
+
+          {/* Main headline - two lines */}
+          <h1 className="text-5xl md:text-6xl lg:text-6xl font-bold tracking-tight leading-tight mb-6 md:mb-8">
+            <span className="block">
+              Learn at your pace
+            </span>
+            <span className="block">
+              master new skills
+            </span>
+          </h1>
+
+          {/* Description text with smooth fade animation */}
+          <div className="space-y-3 max-w-2xl mt-4 text-center">
             <p
-              className={`max-w-[600px] text-slate-700 dark:text-white/90 text-base md:text-lg lg:text-xl mt-4 font-normal transition-all duration-700 ease-out ${
+              className={`text-[16px] md:text-[18px] text-gray-300 dark:text-gray-300 transition-all duration-1200 leading-relaxed ${
                 isVisible
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4"
+                  ? "opacity-100 translate-y-0 blur-0"
+                  : "opacity-0 translate-y-6 blur-sm"
               }`}
-              style={{ transitionDelay: "0.4s" }}
+              style={{
+                transitionDelay: "0.7s",
+                transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
             >
-              Join thousands mastering in-demand skills. Build expertise, advance your career, unlock opportunities at your pace.
+              Access thousands of courses taught by industry experts.
+            </p>
+            <p
+              className={`text-[16px] md:text-[18px] text-gray-300 dark:text-gray-300 transition-all duration-1200 leading-relaxed ${
+                isVisible
+                  ? "opacity-100 translate-y-0 blur-0"
+                  : "opacity-0 translate-y-6 blur-sm"
+              }`}
+              style={{
+                transitionDelay: "0.85s",
+                transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+            >
+              Build real-world projects and advance your career with our
+              comprehensive learning platform.
             </p>
           </div>
 
-          {/* Buttons with fade-in animation */}
+          {/* CTA Buttons with smooth scale and fade animation */}
           <div
-            className={`flex flex-col sm:flex-row gap-3 mt-2 transition-all duration-700 ease-out ${
+            className={`flex flex-col sm:flex-row gap-3 mt-6 md:mt-8 transition-all duration-1200 ${
               isVisible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-4"
+                ? "opacity-100 translate-y-0 scale-100"
+                : "opacity-0 translate-y-8 scale-90"
             }`}
-            style={{ transitionDelay: "0.55s" }}
+            style={{
+              transitionDelay: "1s",
+              transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
           >
             <Link
               href="/courses"
-              className="group relative px-4 py-1.5 font-semibold text-sm text-white bg-primary hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden"
-              style={{ borderRadius: '6px' }}
+              className="group relative px-5 py-2.5 font-semibold text-sm text-black dark:text-black bg-white hover:bg-gray-100 dark:hover:bg-gray-100 transition-all duration-300 rounded-lg transform hover:scale-105 active:scale-95 hover:shadow-xl hover:shadow-white/30 overflow-hidden animate-pulse-on-hover"
+              style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" }}
             >
-              {/* Hover glow effect */}
-              <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ borderRadius: '6px' }} />
-              {/* Shine effect on hover */}
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" style={{ borderRadius: '6px' }} />
-              <span className="relative z-10">Explore Courses</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                Start learning free
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+              </span>
             </Link>
 
             <Link
-              href="/login"
-              className="group relative px-4 py-1.5 font-semibold text-sm text-slate-900 dark:text-white border border-slate-900/20 dark:border-white/80 bg-white dark:bg-[#1A2B40] hover:text-primary hover:border-primary transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden"
-              style={{ borderRadius: '6px' }}
+              href="/courses"
+              className="group relative px-5 py-2.5 font-semibold text-sm text-white dark:text-white border-2 border-white dark:border-white hover:bg-white/20 dark:hover:bg-white/20 transition-all duration-300 rounded-lg transform hover:scale-105 active:scale-95 hover:shadow-xl hover:shadow-white/20 hover:border-white/80 overflow-hidden backdrop-blur-sm animate-pulse-on-hover"
+              style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" }}
             >
-              {/* Hover glow effect */}
-              <span className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ borderRadius: '6px' }} />
-              <span className="relative z-10 transition-colors duration-300">Sign in</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                Explore courses
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+              </span>
             </Link>
-          </div>
-
-          {/* Feature highlights section */}
-          <div
-            className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-8 pt-8 border-t border-black/10 dark:border-white/10 w-full max-w-2xl transition-all duration-700 ease-out ${
-              isVisible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-4"
-            }`}
-            style={{ transitionDelay: "0.7s" }}
-          >
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors duration-300">
-                <Clock className="w-6 h-6 md:w-7 md:h-7 text-primary" />
-              </div>
-              <div className="text-sm md:text-base font-semibold text-slate-900 dark:text-white">Learn at Your Pace</div>
-              <div className="text-xs md:text-sm text-slate-600 dark:text-white/60 mt-1">Flexible schedule</div>
-            </div>
-            
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors duration-300">
-                <Users className="w-6 h-6 md:w-7 md:h-7 text-primary" />
-              </div>
-              <div className="text-sm md:text-base font-semibold text-slate-900 dark:text-white">Expert Instructors</div>
-              <div className="text-xs md:text-sm text-slate-600 dark:text-white/60 mt-1">Industry professionals</div>
-            </div>
-            
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors duration-300">
-                <Award className="w-6 h-6 md:w-7 md:h-7 text-primary" />
-              </div>
-              <div className="text-sm md:text-base font-semibold text-slate-900 dark:text-white">Certificates</div>
-              <div className="text-xs md:text-sm text-slate-600 dark:text-white/60 mt-1">Get certified</div>
-            </div>
-            
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors duration-300">
-                <BookOpen className="w-6 h-6 md:w-7 md:h-7 text-primary" />
-              </div>
-              <div className="text-sm md:text-base font-semibold text-slate-900 dark:text-white">500+ Courses</div>
-              <div className="text-xs md:text-sm text-slate-600 dark:text-white/60 mt-1">Wide selection</div>
-            </div>
           </div>
         </div>
       </div>
     </section>
   );
 }
-

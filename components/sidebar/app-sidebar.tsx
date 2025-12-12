@@ -10,7 +10,6 @@ import {
   IconFolder,
   IconHelp,
   IconListDetails,
-  IconSearch,
   IconSettings,
   IconUsers,
   IconUserCircle,
@@ -70,6 +69,7 @@ const allNavMainItems = [
     url: "/admin/blogs",
     icon: IconArticle,
     requiresSuperAdmin: true,
+    hideFromAdmin: true, // Hide from admin users even if they have SuperAdmin membership
   },
   {
     title: "My Profile",
@@ -121,6 +121,7 @@ const allNavMainItems = [
     url: "/admin/team",
     icon: IconUsers,
     requiresSuperAdmin: true,
+    hideFromAdmin: true, // Hide from admin users even if they have SuperAdmin membership
   },
   {
     title: "Membership",
@@ -181,6 +182,13 @@ const allNavMainItems = [
     title: "System Config",
     url: "/superadmin/config",
     icon: IconDatabase,
+    requiresSuperAdmin: true,
+    hideFromAdmin: true, // Hide from admin users even if they have SuperAdmin membership
+  },
+  {
+    title: "Help Requests",
+    url: "/superadmin/help-requests",
+    icon: IconHelp,
     requiresSuperAdmin: true,
     hideFromAdmin: true, // Hide from admin users even if they have SuperAdmin membership
   },
@@ -246,11 +254,6 @@ const data = {
       title: "Get Help",
       url: "/admin/get-help",
       icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "/admin/search",
-      icon: IconSearch,
     },
   ],
 };

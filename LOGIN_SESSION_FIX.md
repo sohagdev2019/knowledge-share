@@ -122,3 +122,5 @@ Token is stored in `verification` table with UUID as ID and expires in 5 minutes
 
 
 
+
+

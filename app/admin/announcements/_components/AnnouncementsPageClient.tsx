@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { IconPlus, IconChartBar, IconFolder } from "@tabler/icons-react";
@@ -58,32 +58,34 @@ export function AnnouncementsPageClient({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Fetch announcements when filters change
-  useEffect(() => {
-    const fetchAnnouncements = async () => {
-      setIsLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (selectedCourse !== "All") {
-          params.append("courseId", selectedCourse);
-        }
-        params.append("sortBy", sortBy);
-
-        const response = await fetch(`/api/announcements?${params.toString()}`);
-        if (!response.ok) throw new Error("Failed to fetch");
-        const data = await response.json();
-        setAnnouncements(data);
-      } catch (error) {
-        toast.error("Failed to fetch announcements");
-      } finally {
-        setIsLoading(false);
+  // Fetch announcements function - extracted for reuse
+  const fetchAnnouncements = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedCourse !== "All") {
+        params.append("courseId", selectedCourse);
       }
-    };
+      params.append("sortBy", sortBy);
 
-    fetchAnnouncements();
+      const response = await fetch(`/api/announcements?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch");
+      const data = await response.json();
+      setAnnouncements(data);
+    } catch (error) {
+      toast.error("Failed to fetch announcements");
+    } finally {
+      setIsLoading(false);
+    }
   }, [selectedCourse, sortBy]);
 
-  const handleRefresh = () => {
+  // Fetch announcements when filters change
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
+  const handleRefresh = async () => {
+    await fetchAnnouncements();
     router.refresh();
   };
 
