@@ -3,7 +3,6 @@ import { getBlogBySlug } from "@/app/data/blog/get-blogs";
 import { getBlogComments } from "@/app/data/blog/get-blog-comments";
 import { BlogDetail } from "./_components/BlogDetail";
 import { BlogComments } from "./_components/BlogComments";
-import { prisma } from "@/lib/db";
 import { getUserRole } from "@/app/data/admin/get-user-role";
 
 interface BlogPageProps {
@@ -40,7 +39,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
           <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
             <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
               <span className="font-semibold">👁️ Preview Mode</span>
-              <span className="text-sm">This blog is in "{blog.status}" status and is only visible to superadmin.</span>
+              <span className="text-sm">This blog is in &quot;{blog.status}&quot; status and is only visible to superadmin.</span>
             </div>
           </div>
         )}

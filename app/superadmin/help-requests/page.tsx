@@ -6,9 +6,10 @@ import { HelpRequestsTable } from "./_components/HelpRequestsTable";
 export default async function HelpRequestsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
-  const status = searchParams.status || "all";
+  const resolvedSearchParams = await searchParams;
+  const status = resolvedSearchParams.status || "all";
   const helpRequests = await getHelpRequests(status);
 
   return (

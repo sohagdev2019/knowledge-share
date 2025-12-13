@@ -1,4 +1,3 @@
-import { StudentsGridSection } from "./_components/StudentsGridSection";
 import { StudentsHeroSection } from "./_components/StudentsHeroSection";
 import { StudentsPageClient } from "./_components/StudentsPageClient";
 

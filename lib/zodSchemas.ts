@@ -77,8 +77,8 @@ export const blogSchema = z.object({
   seoTitle: z.string().max(60).optional(),
   seoDescription: z.string().max(160).optional(),
   categoryId: z.string().optional(),
-  tags: z.array(z.string()).default([]),
-  isDraft: z.boolean().default(false),
+  tags: z.array(z.string()),
+  isDraft: z.boolean(),
   courseId: z.string().optional(),
 });
 

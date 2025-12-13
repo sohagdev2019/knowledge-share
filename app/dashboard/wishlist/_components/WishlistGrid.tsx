@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { IconHeart } from "@tabler/icons-react";
-import { useConstructUrl } from "@/hooks/use-construct-url";
 import { WishlistItemType } from "@/app/data/user/get-wishlist";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -27,6 +26,11 @@ export function WishlistGrid({ items }: WishlistGridProps) {
       currency: "USD",
       minimumFractionDigits: 0,
     }).format(price / 100);
+  };
+
+  const constructFileUrl = (key: string) => {
+    if (!key) return "";
+    return `https://${process.env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.fly.storage.tigris.dev/${key}`;
   };
 
   const handleRemoveFromWishlist = async (wishlistId: string, courseId: string) => {
@@ -60,7 +64,7 @@ export function WishlistGrid({ items }: WishlistGridProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {items.map((item, index) => {
-        const thumbnailUrl = useConstructUrl(item.fileKey);
+        const thumbnailUrl = constructFileUrl(item.fileKey);
         const priceText = formatPrice(item.price);
         const isRemoving = removingIds.has(item.id);
 

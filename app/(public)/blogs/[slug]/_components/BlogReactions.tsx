@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, ThumbsUp, Lightbulb, Laugh, Loader2 } from "lucide-react";
+import { Heart, Lightbulb, Laugh, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,6 @@ export function BlogReactions({ blogId, initialLikeCount }: BlogReactionsProps) 
   const [loveCount, setLoveCount] = useState(0);
   const [insightfulCount, setInsightfulCount] = useState(0);
   const [funnyCount, setFunnyCount] = useState(0);
-  const [reacted, setReacted] = useState(false);
   const [reactedType, setReactedType] = useState<"Like" | "Love" | "Insightful" | "Funny" | null>(null);
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(true);
@@ -36,7 +35,6 @@ export function BlogReactions({ blogId, initialLikeCount }: BlogReactionsProps) 
           setFunnyCount(data.counts.Funny || 0);
           
           if (data.userReaction) {
-            setReacted(true);
             setReactedType(data.userReaction);
           }
         }
@@ -88,12 +86,11 @@ export function BlogReactions({ blogId, initialLikeCount }: BlogReactionsProps) 
           setReactedType(type);
         }
         
-        setReacted(true);
         toast.success(oldType ? "Reaction updated!" : "Reaction added!");
       } else {
         toast.error(data.error || "Failed to add reaction");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An error occurred");
     } finally {
       setIsLoading(null);

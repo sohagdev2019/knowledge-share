@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { tryCatch } from "@/hooks/try-catch";
-import { useConstructUrl } from "@/hooks/use-construct-url";
+import { env } from "@/lib/env";
 import { BookIcon, CheckCircle, FileText, Download, Calendar, Award, Upload, CheckCircle2, Clock, Link2, Edit, ChevronLeft, ChevronRight, Lock, Coins, AlertCircle } from "lucide-react";
 import { useTransition, useState, useEffect } from "react";
 import { markLessonComplete, submitAssignment } from "../actions";
@@ -34,13 +34,19 @@ export function CourseContent({ data }: iAppProps) {
   const [submissionDescription, setSubmissionDescription] = useState<string>("");
   const [showEditForm, setShowEditForm] = useState<boolean>(false);
   const { triggerConfetti } = useConfetti();
+  
+  const constructFileUrl = (key: string) => {
+    if (!key) return "";
+    return `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.fly.storage.tigris.dev/${key}`;
+  };
+  
   const assignmentFileUrl = data.assignment?.fileKey
-    ? useConstructUrl(data.assignment.fileKey)
+    ? constructFileUrl(data.assignment.fileKey)
     : null;
   
   const submission = data.assignment?.submissions[0];
   const submissionFileUrl = submission?.fileKey
-    ? useConstructUrl(submission.fileKey)
+    ? constructFileUrl(submission.fileKey)
     : null;
 
   // Check if user can edit submission
@@ -78,8 +84,8 @@ export function CourseContent({ data }: iAppProps) {
     thumbnailKey: string;
     videoKey: string;
   }) {
-    const videoUrl = useConstructUrl(videoKey);
-    const thumbnailUrl = useConstructUrl(thumbnailKey);
+    const videoUrl = constructFileUrl(videoKey);
+    const thumbnailUrl = constructFileUrl(thumbnailKey);
 
     if (!videoKey) {
       return (

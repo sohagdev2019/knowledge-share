@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import Link from "next/link";
 import { Pencil, Trash2, Clock, BookOpen } from "lucide-react";
-import { useConstructUrl } from "@/hooks/use-construct-url";
 import { EmptyState } from "@/components/general/EmptyState";
 
 type Course = {
@@ -53,10 +52,15 @@ export function MyCoursesGrid({ courses }: MyCoursesGridProps) {
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
   };
 
+  const constructFileUrl = (key: string) => {
+    if (!key) return "";
+    return `https://${process.env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.fly.storage.tigris.dev/${key}`;
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {courses.map((course, index) => {
-        const thumbnailUrl = useConstructUrl(course.fileKey);
+        const thumbnailUrl = constructFileUrl(course.fileKey);
         const lessonsCount = totalLessons(course);
 
         return (

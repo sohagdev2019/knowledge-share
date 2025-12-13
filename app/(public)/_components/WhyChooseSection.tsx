@@ -14,7 +14,7 @@ interface ActivityItem {
 
 export default function WhyChooseSection() {
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
-  const [activities, setActivities] = useState<ActivityItem[]>([
+  const [activities] = useState<ActivityItem[]>([
     {
       id: "1",
       title: "React Mastery Course",

@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "@/lib/date-utils";
 import Image from "next/image";
-import { useConstructUrl } from "@/hooks/use-construct-url";
 import { motion, AnimatePresence } from "framer-motion";
+import { env } from "@/lib/env";
 
 interface Comment {
   id: string;
@@ -42,7 +42,8 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
   
   // Helper function to construct file URL
   const constructFileUrl = (key: string) => {
-    return useConstructUrl(key);
+    if (!key) return "";
+    return `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.fly.storage.tigris.dev/${key}`;
   };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -74,7 +75,7 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
       } else {
         toast.error(data.error || "Failed to add comment");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An error occurred");
     } finally {
       setIsSubmittingComment(false);
@@ -116,7 +117,7 @@ export function BlogComments({ blogId, initialComments }: BlogCommentsProps) {
       } else {
         toast.error(data.error || "Failed to add reply");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An error occurred");
     } finally {
       setIsSubmittingReply(null);

@@ -6,7 +6,6 @@ import { StudentsSkeleton } from "./StudentsSkeleton";
 import { StudentType } from "@/app/data/student/get-all-students";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export function StudentsPageClient() {
   const [students, setStudents] = useState<StudentType[]>([]);

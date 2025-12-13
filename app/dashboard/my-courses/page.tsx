@@ -79,7 +79,7 @@ async function getCourseStats(userId: string) {
 export default async function MyCoursesPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
   const user = await requireUser();
   const dbUser = await prisma.user.findUnique({
@@ -91,7 +91,8 @@ export default async function MyCoursesPage({
     redirect("/dashboard");
   }
 
-  const status = (searchParams.status as CourseStatus) || "Published";
+  const resolvedSearchParams = await searchParams;
+  const status = (resolvedSearchParams.status as CourseStatus) || "Published";
 
   const [courses, stats] = await Promise.all([
     getMyCourses(user.id, status),

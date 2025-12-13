@@ -5,10 +5,11 @@ import { auth } from "@/lib/auth";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { applicationId: string } }
+  { params }: { params: Promise<{ applicationId: string }> }
 ) {
   try {
     const session = await requireSuperAdmin();
+    const { applicationId } = await params;
     const body = await req.json();
     const { status, rejectionReason } = body;
 
@@ -21,7 +22,7 @@ export async function PATCH(
 
     const application = await prisma.teacherApplication.findUnique({
       where: {
-        id: params.applicationId,
+        id: applicationId,
       },
       include: {
         user: true,
@@ -38,7 +39,7 @@ export async function PATCH(
     // Update application
     const updated = await prisma.teacherApplication.update({
       where: {
-        id: params.applicationId,
+        id: applicationId,
       },
       data: {
         status,

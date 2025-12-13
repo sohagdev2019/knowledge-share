@@ -11,7 +11,7 @@ export default function InfrastructureSection() {
           Our own infrastructure
         </h2>
         <p className="text-muted-foreground max-w-lg mx-auto">
-          We're not another course platform wrapper. We built our own learning
+          We&apos;re not another course platform wrapper. We built our own learning
           infrastructure, handle content delivery, and manage our servers
           ourselves. Better performance, lower costs.
         </p>

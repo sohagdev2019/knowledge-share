@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRevealOnScroll } from "@/hooks/use-reveal-on-scroll";
-import { useConstructUrl } from "@/hooks/use-construct-url";
 import { 
   BookOpen, 
   Users, 
@@ -73,8 +72,13 @@ export function CreatorsGridSection({ creators }: CreatorsGridSectionProps) {
 }
 
 function CreatorCard({ creator, index }: { creator: CreatorType; index: number }) {
-  const { ref, isVisible } = useRevealOnScroll<HTMLElement>();
+  const { ref, isVisible } = useRevealOnScroll<HTMLDivElement>();
   const [mounted, setMounted] = useState(false);
+  
+  const constructFileUrl = (key: string) => {
+    if (!key) return "";
+    return `https://${process.env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.fly.storage.tigris.dev/${key}`;
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -85,7 +89,7 @@ function CreatorCard({ creator, index }: { creator: CreatorType; index: number }
   const avatarUrl = creator.image
     ? creator.image.startsWith("http")
       ? creator.image
-      : useConstructUrl(creator.image)
+      : constructFileUrl(creator.image)
     : `https://avatar.vercel.sh/${creator.email}`;
 
   const totalEnrollments = creator.courses.reduce(
@@ -233,7 +237,7 @@ function CreatorCard({ creator, index }: { creator: CreatorType; index: number }
             </h4>
             <div className="space-y-2">
               {creator.courses.slice(0, 3).map((course, courseIndex) => {
-                const courseThumbnailUrl = useConstructUrl(course.fileKey);
+                const courseThumbnailUrl = constructFileUrl(course.fileKey);
                 return (
                   <Link
                     key={course.id}

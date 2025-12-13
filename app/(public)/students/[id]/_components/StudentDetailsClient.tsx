@@ -92,7 +92,6 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<StudentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const constructUrl = useConstructUrl();
   
   // All hooks must be called before any conditional returns
   const avatarUrl = useMemo(() => {
@@ -100,10 +99,10 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
     if (student.image) {
       return student.image.startsWith("http")
         ? student.image
-        : constructUrl(student.image);
+        : useConstructUrl(student.image);
     }
     return `https://avatar.vercel.sh/${student.email || ""}`;
-  }, [student?.image, student?.email, constructUrl]);
+  }, [student?.image, student?.email]);
 
   useEffect(() => {
     async function fetchStudent() {

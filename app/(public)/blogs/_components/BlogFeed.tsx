@@ -3,9 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Clock, Heart, MessageCircle, Eye, User, Lightbulb, Laugh } from "lucide-react";
-import { useConstructUrl } from "@/hooks/use-construct-url";
 import { formatDistanceToNow } from "@/lib/date-utils";
 import { useSearchParams } from "next/navigation";
+import { env } from "@/lib/env";
 
 interface Blog {
   id: string;
@@ -47,8 +47,11 @@ interface BlogFeedProps {
 }
 
 export function BlogFeed({ blogs, total, currentPage, hasMore }: BlogFeedProps) {
-  const constructFileUrl = (key: string) => useConstructUrl(key);
   const searchParams = useSearchParams();
+  const constructFileUrl = (key: string) => {
+    if (!key) return "";
+    return `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.fly.storage.tigris.dev/${key}`;
+  };
 
   // Build URL with preserved filters
   const buildPaginationUrl = (page: number) => {

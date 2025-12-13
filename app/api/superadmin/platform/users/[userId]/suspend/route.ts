@@ -5,16 +5,17 @@ import { auth } from "@/lib/auth";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     await requireSuperAdmin();
+    const { userId } = await params;
     const body = await req.json();
     const { banned, banReason, banExpires } = body;
 
     const user = await prisma.user.update({
       where: {
-        id: params.userId,
+        id: userId,
       },
       data: {
         banned: banned ?? true,

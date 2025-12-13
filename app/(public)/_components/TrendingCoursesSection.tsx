@@ -1,7 +1,6 @@
 "use client";
 
 import { PublicCourseType } from "@/app/data/course/get-all-courses";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConstructUrl } from "@/hooks/use-construct-url";
 import { Star, ChevronRight } from "lucide-react";

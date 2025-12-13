@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Gamepad2, BarChart3, Users, Zap, Shield, Key, Headphones } from "lucide-react";
+import { BookOpen, Gamepad2, BarChart3, Users } from "lucide-react";
 
 interface FeatureProps {
   title: string;

@@ -1,13 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { Clock, Heart, MessageCircle, Eye, User, Calendar } from "lucide-react";
-import { useConstructUrl } from "@/hooks/use-construct-url";
+import { Clock, Eye, User, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "@/lib/date-utils";
 import { generateHTML } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import { BlogReactions } from "./BlogReactions";
 import { useEffect, useState } from "react";
+import { env } from "@/lib/env";
 
 interface BlogDetailProps {
   blog: {
@@ -40,7 +40,10 @@ interface BlogDetailProps {
 }
 
 export function BlogDetail({ blog }: BlogDetailProps) {
-  const constructFileUrl = (key: string) => useConstructUrl(key);
+  const constructFileUrl = (key: string) => {
+    if (!key) return "";
+    return `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.fly.storage.tigris.dev/${key}`;
+  };
   const [htmlContent, setHtmlContent] = useState<string>("");
   const [viewCount, setViewCount] = useState(blog.viewCount);
 

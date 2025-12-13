@@ -5,10 +5,11 @@ import { prisma } from "@/lib/db";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
+    const { id } = await params;
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +27,7 @@ export async function PATCH(
 
     // Get the request to find the support call
     const requestRecord = await prisma.supportCallRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         SupportCall: {
           include: {
@@ -57,7 +58,7 @@ export async function PATCH(
     }
 
     const updatedRequest = await updateSupportRequestStatus({
-      id: params.id,
+      id,
       status: status as "Accepted" | "Rejected" | "Completed",
     });
 

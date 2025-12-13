@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getBlogs, getBlogCategories, getFeaturedBlogs, getTrendingBlogs, getLatestBlogs } from "@/app/data/blog/get-blogs";
+import { getBlogs, getBlogCategories, getFeaturedBlogs, getTrendingBlogs } from "@/app/data/blog/get-blogs";
 import { BlogFeedWrapper } from "./_components/BlogFeedWrapper";
 import { BlogFilters } from "./_components/BlogFilters";
 import { BlogHero } from "./_components/BlogHero";
@@ -23,7 +23,7 @@ export default async function BlogsPage({
   const params = await searchParams;
   const categoryId = params.category;
   const search = params.search;
-  const sortBy = (params.sort as any) || "newest";
+  const sortBy = (params.sort as "newest" | "trending" | "most_liked" | "most_commented" | "most_viewed" | undefined) || "newest";
   const page = parseInt(params.page || "1");
   const limit = 12;
   const offset = (page - 1) * limit;

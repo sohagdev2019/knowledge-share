@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string; requestId: string } }
+  { params }: { params: Promise<{ id: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -15,10 +15,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: supportCallId, requestId } = await params;
     const body = await request.json();
     const { status } = body;
-    const supportCallId = params.id;
-    const requestId = params.requestId;
 
     if (!["Accepted", "Rejected"].includes(status)) {
       return NextResponse.json(

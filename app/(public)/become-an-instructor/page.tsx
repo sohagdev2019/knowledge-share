@@ -7,9 +7,7 @@ import {
   BookOpenCheck,
   DollarSign,
   Globe,
-  GraduationCap,
   Users,
-  Sparkles,
   ArrowRight,
 } from "lucide-react";
 import { useRevealOnScroll } from "@/hooks/use-reveal-on-scroll";

@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import { PublicCourseType } from "@/app/data/course/get-all-courses";
 import {
   PublicCourseCard,
-  PublicCourseCardSkeleton,
 } from "../../_components/PublicCourseCard";
 import { Input } from "@/components/ui/input";
 import {
@@ -217,7 +216,7 @@ export function CoursesPageClient({ initialCourses }: CoursesPageClientProps) {
             No courses found
           </p>
           <p className="text-sm text-muted-foreground mb-4">
-            Try adjusting your search or filters to find what you're looking for.
+            Try adjusting your search or filters to find what you&apos;re looking for.
           </p>
           {hasActiveFilters && (
             <Button variant="outline" onClick={clearFilters}>

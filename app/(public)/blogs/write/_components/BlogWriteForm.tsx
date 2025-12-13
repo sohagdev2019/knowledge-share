@@ -299,7 +299,7 @@ export function BlogWriteForm({ categories, userPoints, remainingFreePosts }: Bl
                 <Uploader
                   value={field.value}
                   onChange={field.onChange}
-                  endpoint="upload"
+                  fileTypeAccepted="image"
                 />
               </FormControl>
               <FormMessage />
