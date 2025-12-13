@@ -45,24 +45,24 @@ export function CreatorsGridSection({ creators }: CreatorsGridSectionProps) {
   return (
     <section
       ref={ref}
-      className="py-16 md:py-24 bg-background"
+      className="py-20 md:py-32 bg-gradient-to-b from-muted/10 via-background to-background"
     >
-      <div className="container mx-auto px-4 md:px-6 lg:px-8">
-        <div className={`mb-12 text-center transition-all duration-1000 ease-out ${
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
+        <div className={`mb-16 text-center transition-all duration-1000 ease-out ${
           isVisible
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-8"
         }`}>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
             Our Expert Creators
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
             Each creator brings unique expertise and passion to their courses. 
             Explore their profiles and discover amazing learning opportunities.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
           {creators.map((creator, index) => (
             <CreatorCard key={creator.id} creator={creator} index={index} />
           ))}
@@ -96,57 +96,60 @@ function CreatorCard({ creator, index }: { creator: CreatorType; index: number }
   return (
     <Card
       ref={ref}
-      className={`group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-700 ease-out ${
+      className={`group relative overflow-hidden border-2 border-border/50 bg-gradient-to-br from-card via-card to-card/50 backdrop-blur-sm transition-all duration-700 ease-out ${
         isVisible && mounted
           ? "opacity-100 translate-y-0 scale-100"
           : "opacity-0 translate-y-12 scale-95"
-      } hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-3 hover:border-primary/30 hover:scale-[1.02]`}
+      } hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-4 hover:border-primary/40 hover:scale-[1.03]`}
       style={{
         transitionDelay: `${index * 100}ms`,
         transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
       {/* Animated gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-out z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-primary/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-out z-0" />
       
       {/* Shimmer effect on hover */}
       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-0">
-        <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+        <div className="w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
-      <CardContent className="p-6 space-y-4 relative z-10">
+      {/* Glow effect */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-lg opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-700 -z-10" />
+
+      <CardContent className="p-8 space-y-6 relative z-10">
         {/* Profile Header */}
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-5">
           <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
-            <Avatar className="w-20 h-20 border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/30">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+            <Avatar className="w-24 h-24 border-[3px] border-primary/30 group-hover:border-primary/60 transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-primary/40 ring-4 ring-primary/5 group-hover:ring-primary/20">
               <AvatarImage 
                 src={avatarUrl} 
                 alt={fullName}
                 className="transition-transform duration-500 group-hover:scale-110"
               />
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg transition-all duration-500 group-hover:bg-primary/20">
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-bold text-xl transition-all duration-500 group-hover:from-primary/30 group-hover:to-primary/20">
                 {initials}
               </AvatarFallback>
             </Avatar>
             {creator._count.courses > 0 && (
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-background shadow-lg transition-all duration-500 group-hover:scale-125 group-hover:rotate-12">
-                <GraduationCap className="w-3 h-3 text-white transition-transform duration-500 group-hover:scale-110" />
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-[3px] border-background shadow-xl transition-all duration-500 group-hover:scale-125 group-hover:rotate-12 group-hover:shadow-primary/50">
+                <GraduationCap className="w-4 h-4 text-white transition-transform duration-500 group-hover:scale-110" />
               </div>
             )}
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-xl text-foreground group-hover:text-primary transition-all duration-500 line-clamp-1 group-hover:translate-x-1">
+            <h3 className="font-black text-2xl text-foreground group-hover:text-primary transition-all duration-500 line-clamp-1 group-hover:translate-x-1 bg-gradient-to-r from-foreground to-foreground/70 group-hover:from-primary group-hover:to-primary/80 bg-clip-text text-transparent">
               {fullName}
             </h3>
             {creator.designation && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-1 transition-colors duration-500 group-hover:text-foreground/80">
+              <p className="text-sm font-semibold text-muted-foreground mt-2 line-clamp-1 transition-colors duration-500 group-hover:text-foreground/90">
                 {creator.designation}
               </p>
             )}
             {creator.bio && (
-              <p className="text-sm text-muted-foreground mt-2 line-clamp-2 transition-colors duration-500 group-hover:text-foreground/70">
+              <p className="text-sm text-muted-foreground mt-3 line-clamp-2 leading-relaxed transition-colors duration-500 group-hover:text-foreground/80">
                 {creator.bio}
               </p>
             )}
@@ -155,15 +158,15 @@ function CreatorCard({ creator, index }: { creator: CreatorType; index: number }
 
         {/* Social Links */}
         {(creator.socialGithub || creator.socialLinkedin || creator.socialTwitter || creator.socialWebsite) && (
-          <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border/30 group-hover:border-primary/20 transition-colors duration-500">
+          <div className="flex items-center gap-3 flex-wrap pt-4 border-t-2 border-border/30 group-hover:border-primary/30 transition-colors duration-500">
             {creator.socialGithub && (
               <a
                 href={creator.socialGithub}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-muted hover:bg-primary/20 flex items-center justify-center transition-all duration-300 group/social hover:scale-110 hover:shadow-md hover:shadow-primary/20"
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-muted to-muted/80 hover:from-primary/20 hover:to-primary/10 flex items-center justify-center transition-all duration-300 group/social hover:scale-110 hover:shadow-lg hover:shadow-primary/30 border border-border/50 hover:border-primary/40"
               >
-                <Github className="w-4 h-4 text-muted-foreground group-hover/social:text-primary transition-all duration-300 group-hover/social:scale-110" />
+                <Github className="w-5 h-5 text-muted-foreground group-hover/social:text-primary transition-all duration-300 group-hover/social:scale-110" />
               </a>
             )}
             {creator.socialLinkedin && (
@@ -171,9 +174,9 @@ function CreatorCard({ creator, index }: { creator: CreatorType; index: number }
                 href={creator.socialLinkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-muted hover:bg-primary/20 flex items-center justify-center transition-all duration-300 group/social hover:scale-110 hover:shadow-md hover:shadow-primary/20"
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-muted to-muted/80 hover:from-primary/20 hover:to-primary/10 flex items-center justify-center transition-all duration-300 group/social hover:scale-110 hover:shadow-lg hover:shadow-primary/30 border border-border/50 hover:border-primary/40"
               >
-                <Linkedin className="w-4 h-4 text-muted-foreground group-hover/social:text-primary transition-all duration-300 group-hover/social:scale-110" />
+                <Linkedin className="w-5 h-5 text-muted-foreground group-hover/social:text-primary transition-all duration-300 group-hover/social:scale-110" />
               </a>
             )}
             {creator.socialTwitter && (
@@ -181,9 +184,9 @@ function CreatorCard({ creator, index }: { creator: CreatorType; index: number }
                 href={creator.socialTwitter}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-muted hover:bg-primary/20 flex items-center justify-center transition-all duration-300 group/social hover:scale-110 hover:shadow-md hover:shadow-primary/20"
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-muted to-muted/80 hover:from-primary/20 hover:to-primary/10 flex items-center justify-center transition-all duration-300 group/social hover:scale-110 hover:shadow-lg hover:shadow-primary/30 border border-border/50 hover:border-primary/40"
               >
-                <Twitter className="w-4 h-4 text-muted-foreground group-hover/social:text-primary transition-all duration-300 group-hover/social:scale-110" />
+                <Twitter className="w-5 h-5 text-muted-foreground group-hover/social:text-primary transition-all duration-300 group-hover/social:scale-110" />
               </a>
             )}
             {creator.socialWebsite && (
@@ -191,32 +194,32 @@ function CreatorCard({ creator, index }: { creator: CreatorType; index: number }
                 href={creator.socialWebsite}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-muted hover:bg-primary/20 flex items-center justify-center transition-all duration-300 group/social hover:scale-110 hover:shadow-md hover:shadow-primary/20"
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-muted to-muted/80 hover:from-primary/20 hover:to-primary/10 flex items-center justify-center transition-all duration-300 group/social hover:scale-110 hover:shadow-lg hover:shadow-primary/30 border border-border/50 hover:border-primary/40"
               >
-                <Globe className="w-4 h-4 text-muted-foreground group-hover/social:text-primary transition-all duration-300 group-hover/social:scale-110" />
+                <Globe className="w-5 h-5 text-muted-foreground group-hover/social:text-primary transition-all duration-300 group-hover/social:scale-110" />
               </a>
             )}
           </div>
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/30 group-hover:border-primary/20 transition-colors duration-500">
-          <div className="flex items-center gap-2 p-2 rounded-lg transition-all duration-300 group-hover:bg-primary/5 group/stat">
-            <div className="p-1.5 rounded-lg bg-primary/10 group-hover/stat:bg-primary/20 transition-colors duration-300">
-              <BookOpen className="w-4 h-4 text-primary transition-transform duration-300 group-hover/stat:scale-110 group-hover/stat:rotate-3" />
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t-2 border-border/30 group-hover:border-primary/30 transition-colors duration-500">
+          <div className="flex items-center gap-3 p-3 rounded-xl transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-primary/10 group-hover:to-primary/5 group/stat border border-transparent group-hover:border-primary/20">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 group-hover/stat:from-blue-500/30 group-hover/stat:to-blue-600/30 transition-all duration-300 group-hover/stat:scale-110">
+              <BookOpen className="w-5 h-5 text-blue-500 transition-transform duration-300 group-hover/stat:scale-110 group-hover/stat:rotate-3" />
             </div>
             <div>
-              <div className="text-lg font-bold text-foreground transition-all duration-300 group-hover/stat:scale-110">{creator._count.courses}</div>
-              <div className="text-xs text-muted-foreground transition-colors duration-300 group-hover/stat:text-foreground/80">Courses</div>
+              <div className="text-xl font-black text-foreground transition-all duration-300 group-hover/stat:scale-110">{creator._count.courses}</div>
+              <div className="text-xs font-medium text-muted-foreground transition-colors duration-300 group-hover/stat:text-foreground/90">Courses</div>
             </div>
           </div>
-          <div className="flex items-center gap-2 p-2 rounded-lg transition-all duration-300 group-hover:bg-primary/5 group/stat">
-            <div className="p-1.5 rounded-lg bg-primary/10 group-hover/stat:bg-primary/20 transition-colors duration-300">
-              <Users className="w-4 h-4 text-primary transition-transform duration-300 group-hover/stat:scale-110 group-hover/stat:rotate-3" />
+          <div className="flex items-center gap-3 p-3 rounded-xl transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-primary/10 group-hover:to-primary/5 group/stat border border-transparent group-hover:border-primary/20">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 group-hover/stat:from-emerald-500/30 group-hover/stat:to-emerald-600/30 transition-all duration-300 group-hover/stat:scale-110">
+              <Users className="w-5 h-5 text-emerald-500 transition-transform duration-300 group-hover/stat:scale-110 group-hover/stat:rotate-3" />
             </div>
             <div>
-              <div className="text-lg font-bold text-foreground transition-all duration-300 group-hover/stat:scale-110">{totalEnrollments}</div>
-              <div className="text-xs text-muted-foreground transition-colors duration-300 group-hover/stat:text-foreground/80">Students</div>
+              <div className="text-xl font-black text-foreground transition-all duration-300 group-hover/stat:scale-110">{totalEnrollments}</div>
+              <div className="text-xs font-medium text-muted-foreground transition-colors duration-300 group-hover/stat:text-foreground/90">Students</div>
             </div>
           </div>
         </div>

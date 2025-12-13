@@ -23,8 +23,10 @@ import {
   Twitter,
   Linkedin,
   ArrowLeft,
-  User,
   Phone,
+  Zap,
+  Target,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { useConstructUrl } from "@/hooks/use-construct-url";
@@ -59,7 +61,7 @@ interface StudentDetails {
     courseId: string;
     certificateEarned: boolean;
     createdAt: string;
-    course: {
+    Course: {
       id: string;
       title: string;
       slug: string;
@@ -71,12 +73,12 @@ interface StudentDetails {
   lessonProgress: Array<{
     id: string;
     lessonId: string;
-    completedAt: string | null;
-    lesson: {
+    updatedAt: string;
+    Lesson: {
       id: string;
       title: string;
-      chapter: {
-        course: {
+      Chapter: {
+        Course: {
           id: string;
           title: string;
           slug: string;
@@ -90,7 +92,18 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<StudentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const constructUrl = useConstructUrl;
+  const constructUrl = useConstructUrl();
+  
+  // All hooks must be called before any conditional returns
+  const avatarUrl = useMemo(() => {
+    if (!student) return "";
+    if (student.image) {
+      return student.image.startsWith("http")
+        ? student.image
+        : constructUrl(student.image);
+    }
+    return `https://avatar.vercel.sh/${student.email || ""}`;
+  }, [student?.image, student?.email, constructUrl]);
 
   useEffect(() => {
     async function fetchStudent() {
@@ -148,15 +161,6 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
 
   const fullName = `${student.firstName}${student.lastName ? ` ${student.lastName}` : ""}`;
   const initials = `${student.firstName[0]}${student.lastName?.[0] || ""}`;
-  
-  const avatarUrl = useMemo(() => {
-    if (student.image) {
-      return student.image.startsWith("http")
-        ? student.image
-        : constructUrl(student.image);
-    }
-    return `https://avatar.vercel.sh/${student.email}`;
-  }, [student.image, student.email, constructUrl]);
 
   const joined = student.enrollmentsCount;
   const finished = student.certificatesEarned;
@@ -198,53 +202,54 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
   });
 
   return (
-    <section className="py-8 md:py-12 bg-background min-h-screen">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-6xl">
+    <section className="py-8 md:py-16 bg-gradient-to-b from-background to-muted/20 min-h-screen">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
         {/* Back Button */}
         <Link href="/students-gallery">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <Button variant="ghost" className="mb-8 group">
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back to Gallery
           </Button>
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-6 border-2">
+            <Card className="sticky top-6 border-2 shadow-xl bg-card/50 backdrop-blur-sm">
               <CardContent className="p-6 space-y-6">
                 {/* Avatar and Name */}
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="relative">
-                    <Avatar className="w-32 h-32 border-4 border-primary/30 shadow-lg">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <Avatar className="w-36 h-36 border-4 border-primary/40 shadow-2xl relative z-10 ring-4 ring-primary/10">
                       <AvatarImage
                         src={avatarUrl}
                         alt={fullName}
                         className="object-cover"
                       />
-                      <AvatarFallback className="bg-muted text-foreground font-bold text-3xl">
+                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-foreground font-bold text-4xl">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
                     {student.certificatesEarned > 0 && (
-                      <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-lg">
-                        <Award className="w-5 h-5 text-primary-foreground" />
+                      <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center border-4 border-background shadow-xl animate-pulse">
+                        <Award className="w-6 h-6 text-white" />
                       </div>
                     )}
                   </div>
 
-                  <div className="text-center space-y-2">
-                    <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  <div className="text-center space-y-3">
+                    <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                       {fullName}
                     </h1>
                     {student.designation && (
-                      <p className="text-muted-foreground font-medium">
+                      <p className="text-muted-foreground font-medium text-base">
                         {student.designation}
                       </p>
                     )}
                     <Badge
                       variant="outline"
-                      className={`${rankBadge.className} flex items-center gap-2 px-3 py-1.5 font-bold text-sm border-2 mt-2`}
+                      className={`${rankBadge.className} flex items-center gap-2 px-4 py-2 font-bold text-sm border-2 shadow-lg`}
                     >
                       {rankBadge.icon}
                       <span>Rank #{student.rank}</span>
@@ -252,22 +257,28 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
 
                 {/* Contact Info */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-sm">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
+                  <div className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <Mail className="w-4 h-4 text-primary" />
+                    </div>
                     <span className="text-muted-foreground truncate">{student.email}</span>
                   </div>
                   {student.phoneNumber && (
-                    <div className="flex items-center gap-3 text-sm">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="p-1.5 rounded-md bg-primary/10">
+                        <Phone className="w-4 h-4 text-primary" />
+                      </div>
                       <span className="text-muted-foreground">{student.phoneNumber}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-3 text-sm">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <div className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <Calendar className="w-4 h-4 text-primary" />
+                    </div>
                     <span className="text-muted-foreground">Joined {joinDate}</span>
                   </div>
                 </div>
@@ -275,18 +286,18 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
                 {/* Social Links */}
                 {(student.socialWebsite || student.socialGithub || student.socialFacebook || student.socialTwitter || student.socialLinkedin) && (
                   <>
-                    <Separator />
-                    <div className="space-y-2">
-                      <p className="text-sm font-semibold text-foreground">Social Links</p>
+                    <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
+                    <div className="space-y-3">
+                      <p className="text-sm font-semibold text-foreground">Connect</p>
                       <div className="flex flex-wrap gap-2">
                         {student.socialWebsite && (
                           <a
                             href={student.socialWebsite}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 rounded-lg bg-muted hover:bg-primary/10 transition-colors"
+                            className="p-2.5 rounded-lg bg-muted hover:bg-primary/10 hover:scale-110 transition-all duration-200 border border-transparent hover:border-primary/20"
                           >
-                            <Globe className="w-4 h-4 text-muted-foreground" />
+                            <Globe className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
                           </a>
                         )}
                         {student.socialGithub && (
@@ -294,9 +305,9 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
                             href={student.socialGithub}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 rounded-lg bg-muted hover:bg-primary/10 transition-colors"
+                            className="p-2.5 rounded-lg bg-muted hover:bg-primary/10 hover:scale-110 transition-all duration-200 border border-transparent hover:border-primary/20"
                           >
-                            <Github className="w-4 h-4 text-muted-foreground" />
+                            <Github className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
                           </a>
                         )}
                         {student.socialLinkedin && (
@@ -304,9 +315,9 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
                             href={student.socialLinkedin}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 rounded-lg bg-muted hover:bg-primary/10 transition-colors"
+                            className="p-2.5 rounded-lg bg-muted hover:bg-primary/10 hover:scale-110 transition-all duration-200 border border-transparent hover:border-primary/20"
                           >
-                            <Linkedin className="w-4 h-4 text-muted-foreground" />
+                            <Linkedin className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
                           </a>
                         )}
                         {student.socialTwitter && (
@@ -314,9 +325,9 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
                             href={student.socialTwitter}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 rounded-lg bg-muted hover:bg-primary/10 transition-colors"
+                            className="p-2.5 rounded-lg bg-muted hover:bg-primary/10 hover:scale-110 transition-all duration-200 border border-transparent hover:border-primary/20"
                           >
-                            <Twitter className="w-4 h-4 text-muted-foreground" />
+                            <Twitter className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
                           </a>
                         )}
                         {student.socialFacebook && (
@@ -324,9 +335,9 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
                             href={student.socialFacebook}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 rounded-lg bg-muted hover:bg-primary/10 transition-colors"
+                            className="p-2.5 rounded-lg bg-muted hover:bg-primary/10 hover:scale-110 transition-all duration-200 border border-transparent hover:border-primary/20"
                           >
-                            <Facebook className="w-4 h-4 text-muted-foreground" />
+                            <Facebook className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
                           </a>
                         )}
                       </div>
@@ -337,7 +348,7 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
                 {/* Bio */}
                 {student.bio && (
                   <>
-                    <Separator />
+                    <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
                     <div className="space-y-2">
                       <p className="text-sm font-semibold text-foreground">About</p>
                       <p className="text-sm text-muted-foreground leading-relaxed">
@@ -353,23 +364,27 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
           {/* Right Column - Stats and Details */}
           <div className="lg:col-span-2 space-y-6">
             {/* Points and Level Card */}
-            <Card className="border-2">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-primary/10">
-                      <Star className="w-8 h-8 text-primary" />
+            <Card className="border-2 shadow-lg bg-gradient-to-br from-card to-card/50 overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
+              <CardContent className="p-8 relative z-10">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  <div className="flex items-center gap-6">
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/30 shadow-lg">
+                      <Star className="w-10 h-10 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground font-medium">Total Points</p>
-                      <p className="text-3xl font-bold text-foreground">
-                        {student.points.toLocaleString()} XP
+                      <p className="text-sm text-muted-foreground font-medium mb-1">Total Points</p>
+                      <p className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                        {student.points.toLocaleString()} <span className="text-2xl text-primary">XP</span>
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground font-medium">Level</p>
-                    <p className="text-3xl font-bold text-primary">Level {student.level}</p>
+                  <div className="text-left md:text-right">
+                    <p className="text-sm text-muted-foreground font-medium mb-1">Level</p>
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-primary" />
+                      <p className="text-4xl font-bold text-primary">Level {student.level}</p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -377,51 +392,51 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-6 flex flex-col items-center space-y-2">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <BookOpen className="w-6 h-6 text-primary" />
+              <Card className="border-2 hover:shadow-lg transition-all duration-300 hover:scale-105 hover:border-primary/30">
+                <CardContent className="p-6 flex flex-col items-center space-y-3">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 shadow-md">
+                    <BookOpen className="w-6 h-6 text-blue-500" />
                   </div>
-                  <div className="text-2xl font-bold text-foreground">{joined}</div>
-                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                  <div className="text-3xl font-bold text-foreground">{joined}</div>
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide text-center">
                     Courses Joined
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6 flex flex-col items-center space-y-2">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <GraduationCap className="w-6 h-6 text-primary" />
+              <Card className="border-2 hover:shadow-lg transition-all duration-300 hover:scale-105 hover:border-primary/30">
+                <CardContent className="p-6 flex flex-col items-center space-y-3">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/20 shadow-md">
+                    <GraduationCap className="w-6 h-6 text-green-500" />
                   </div>
-                  <div className="text-2xl font-bold text-foreground">{finished}</div>
-                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                  <div className="text-3xl font-bold text-foreground">{finished}</div>
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide text-center">
                     Completed
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6 flex flex-col items-center space-y-2">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <TrendingUp className="w-6 h-6 text-primary" />
+              <Card className="border-2 hover:shadow-lg transition-all duration-300 hover:scale-105 hover:border-primary/30">
+                <CardContent className="p-6 flex flex-col items-center space-y-3">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 shadow-md">
+                    <TrendingUp className="w-6 h-6 text-purple-500" />
                   </div>
-                  <div className="text-2xl font-bold text-foreground">{onGoing}</div>
-                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                  <div className="text-3xl font-bold text-foreground">{onGoing}</div>
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide text-center">
                     In Progress
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6 flex flex-col items-center space-y-2">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <Award className="w-6 h-6 text-primary" />
+              <Card className="border-2 hover:shadow-lg transition-all duration-300 hover:scale-105 hover:border-primary/30">
+                <CardContent className="p-6 flex flex-col items-center space-y-3">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 shadow-md">
+                    <Award className="w-6 h-6 text-amber-500" />
                   </div>
-                  <div className="text-2xl font-bold text-foreground">
+                  <div className="text-3xl font-bold text-foreground">
                     {student.completedLessonsCount}
                   </div>
-                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide text-center">
                     Lessons Done
                   </div>
                 </CardContent>
@@ -430,15 +445,17 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
 
             {/* Detailed Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
+              <Card className="border-2 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-card to-card/50">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Award className="w-5 h-5 text-primary" />
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-yellow-500/20 to-yellow-600/20">
+                      <Award className="w-5 h-5 text-yellow-500" />
+                    </div>
                     Certificates Earned
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-foreground">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                     {student.certificatesEarned}
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
@@ -447,15 +464,17 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-2 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-card to-card/50">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-primary" />
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/20">
+                      <Target className="w-5 h-5 text-emerald-500" />
+                    </div>
                     Average Grade
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-foreground">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                     {student.averageAssignmentGrade > 0
                       ? `${student.averageAssignmentGrade}%`
                       : "N/A"}
@@ -469,42 +488,45 @@ export function StudentDetailsClient({ studentId }: { studentId: string }) {
 
             {/* Enrolled Courses */}
             {student.enrollment.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-primary" />
+              <Card className="border-2 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+                  <CardTitle className="text-xl flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <BookOpen className="w-5 h-5 text-primary" />
+                    </div>
                     Enrolled Courses ({student.enrollment.length})
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
                     {student.enrollment.map((enrollment) => (
                       <div
                         key={enrollment.id}
-                        className="flex items-center justify-between p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                        className="group flex items-center justify-between p-5 rounded-xl border-2 bg-gradient-to-r from-card to-card/50 hover:from-primary/5 hover:to-primary/10 hover:border-primary/30 transition-all duration-300 hover:shadow-lg"
                       >
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-foreground">
-                            {enrollment.course.title}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">
+                            {enrollment.Course.title}
                           </h4>
-                          <div className="flex gap-2 mt-2">
-                            <Badge variant="outline" className="text-xs">
-                              {enrollment.course.category}
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" className="text-xs font-medium">
+                              {enrollment.Course.category}
                             </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              {enrollment.course.level}
+                            <Badge variant="outline" className="text-xs font-medium">
+                              {enrollment.Course.level}
                             </Badge>
                             {enrollment.certificateEarned && (
-                              <Badge className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
-                                <Award className="w-3 h-3 mr-1" />
+                              <Badge className="text-xs bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-400 border-green-500/30 font-medium">
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
                                 Certified
                               </Badge>
                             )}
                           </div>
                         </div>
-                        <Link href={`/courses/${enrollment.course.slug}`}>
-                          <Button variant="outline" size="sm">
+                        <Link href={`/courses/${enrollment.Course.slug}`} className="ml-4">
+                          <Button variant="outline" size="sm" className="group/btn">
                             View Course
+                            <ArrowLeft className="w-4 h-4 ml-2 rotate-180 group-hover/btn:translate-x-1 transition-transform" />
                           </Button>
                         </Link>
                       </div>

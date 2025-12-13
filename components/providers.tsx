@@ -16,7 +16,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // SessionProvider must always be available, even before mounting
   // The mounting check is only for ThemeProvider to avoid hydration issues
   return (
-    <SessionProvider>
+    <SessionProvider
+      basePath="/api/auth"
+      refetchInterval={0}
+      refetchOnWindowFocus={false}
+    >
       {mounted ? (
         <ThemeProvider
           attribute="class"

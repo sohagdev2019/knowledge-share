@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { UserDropdown } from "./UserDropdown";
 import { getUserRole } from "./get-user-role";
 import { useConstructUrl as constructFileUrl } from "@/hooks/use-construct-url";
+import Logo from "@/public/logo.png";
 
 const resourcesItems = [
   { name: "Creator Stories", href: "/creator-stories" },
@@ -79,30 +81,33 @@ function NavDropdown({
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 cursor-pointer outline-none"
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-all duration-300 px-3 py-1.5 rounded-lg hover:bg-white/5"
       >
         {label}
-        <ChevronDown
-          className={`h-4 w-4 transition-transform duration-200 ${
-            open ? "rotate-180" : ""
-          }`}
+        <ChevronDown 
+          className={`h-3.5 w-3.5 transition-transform duration-300 ${
+            open ? "rotate-180" : "rotate-0"
+          }`} 
         />
       </button>
       <div
-        className={`absolute left-1/2 -translate-x-1/2 lg:left-0 lg:translate-x-0 top-full mt-3 w-56 rounded-xl border border-border bg-background/95 shadow-xl backdrop-blur-md transition-all duration-200 ${
+        className={`absolute left-1/2 -translate-x-1/2 lg:left-0 lg:translate-x-0 top-full mt-3 w-56 rounded-xl border border-border bg-background/95 shadow-xl backdrop-blur-md transition-all duration-300 ease-out ${
           open
-            ? "opacity-100 translate-y-0 pointer-events-auto"
-            : "opacity-0 translate-y-2 pointer-events-none"
+            ? "opacity-100 translate-y-0 pointer-events-auto scale-100"
+            : "opacity-0 -translate-y-2 pointer-events-none scale-95"
         }`}
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       >
         <div className="py-2">
-          {items.map((item) => (
+          {items.map((item, index) => (
             <Link
               key={item.name}
               href={item.href}
-              className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all duration-200"
+              style={{
+                animationDelay: open ? `${index * 50}ms` : "0ms",
+              }}
             >
               {item.name}
             </Link>
@@ -117,9 +122,12 @@ export function Navbar() {
   const { data: session, status } = useSession();
   const isPending = status === "loading";
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const sessionFirstName =
     (session?.user as { firstName?: string } | undefined)?.firstName?.trim();
-  
+
   // Fetch user role when session is available
   useEffect(() => {
     if (session) {
@@ -129,85 +137,126 @@ export function Navbar() {
     }
   }, [session]);
 
-  console.log("session", session);
+  // Scroll animation handler
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Add shadow/effect when scrolled
+      setIsScrolled(currentScrollY > 20);
+      
+      // Hide/show navbar on scroll (optional - can be removed if not needed)
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
 
   // Filter navigation items - removed Courses and Dashboard as they're in profile dropdown
   const visibleNavItems: Array<{ name: string; href: string; requireAuth?: boolean }> = [];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-[backdrop-filter]:bg-background/60">
-      <div className="container flex min-h-16 items-center mx-auto px-4 md:px-6 lg:px-8">
-        <Link href="/" className="flex items-center mr-4 cursor-pointer">
-          <span className="font-bold">KnowledgeShare.</span>
+    <nav 
+      className={`sticky top-4 z-50 flex justify-center px-4 transition-all duration-500 ease-out ${
+        isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+      }`}
+    >
+      <div 
+        className={`flex items-center justify-between w-full max-w-4xl bg-black rounded-full px-6 py-2.5 transition-all duration-500 ease-out ${
+          isScrolled 
+            ? "shadow-2xl shadow-black/50 scale-[0.98]" 
+            : "shadow-lg shadow-black/30 scale-100"
+        }`}
+      >
+        <Link 
+          href="/" 
+          className="flex items-center transition-transform duration-300 hover:scale-105"
+        >
+          <Image
+            alt="KnowledgeShare"
+            loading="lazy"
+            width={120}
+            height={28}
+            className="h-6 w-auto dark:invert transition-opacity duration-300"
+            src={Logo}
+            style={{ color: "transparent" }}
+          />
         </Link>
 
         {/* Desktop navigation */}
-        <nav className="hidden md:flex md:flex-1 md:items-center md:justify-end">
-          <div className="flex items-center space-x-6">
-            {visibleNavItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
-              >
-                {item.name}
-              </Link>
-            ))}
-            
-            <NavDropdown label="Resources" items={resourcesItems} />
-            {/* Hide Instructors and Get Support when logged in as admin */}
-            {userRole !== "admin" && (
-              <>
-                <NavDropdown label="Instructors" items={instructorItems} />
-                <NavDropdown label="Get Support" items={supportItems} />
-              </>
-            )}
-            <NavDropdown label="Students" items={studentItems} />
-          </div>
+        <div className="hidden md:flex items-center gap-1">
+          {visibleNavItems.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className="text-sm text-muted-foreground hover:text-foreground transition-all duration-300 px-3 py-1.5 rounded-lg hover:bg-white/5"
+            >
+              {item.name}
+            </Link>
+          ))}
 
-          <div className="flex items-center space-x-4 ml-6">
-            {isPending ? null : session?.user ? (
-              <UserDropdown
-                email={session.user.email || ""}
-                image={
-                  session.user.image
-                    ? session.user.image.startsWith("http")
-                      ? session.user.image
-                      : constructFileUrl(session.user.image)
-                    : `https://avatar.vercel.sh/${session.user.email || ""}`
-                }
-                firstName={
-                  sessionFirstName && sessionFirstName.length > 0
-                    ? sessionFirstName
-                    : session.user.email?.split("@")[0] || ""
-                }
-                userRole={userRole}
-              />
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="group relative rounded-md px-4 py-1.5 font-semibold text-sm text-white border border-white/80 bg-[#1A2B40] hover:text-primary hover:border-primary transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden"
-                >
-                  {/* Hover glow effect */}
-                  <span className="absolute inset-0 rounded-md bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span className="relative z-10 transition-colors duration-300">Sign in</span>
-                </Link>
-                <Link
-                  href="/register"
-                  className="group relative rounded-md px-4 py-1.5 font-semibold text-sm text-white bg-primary hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden"
-                >
-                  {/* Hover glow effect */}
-                  <span className="absolute inset-0 rounded-md bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  {/* Shine effect on hover */}
-                  <span className="absolute inset-0 rounded-md bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  <span className="relative z-10">Join</span>
-                </Link>
-              </>
-            )}
-          </div>
-        </nav>
+          <NavDropdown label="Resources" items={resourcesItems} />
+          {/* Hide Instructors and Get Support when logged in as admin */}
+          {userRole !== "admin" && (
+            <>
+              <NavDropdown label="Instructors" items={instructorItems} />
+              <NavDropdown label="Get Support" items={supportItems} />
+            </>
+          )}
+          <NavDropdown label="Students" items={studentItems} />
+        </div>
+
+        {/* Desktop auth buttons */}
+        <div className="hidden md:flex items-center gap-2">
+          {isPending ? null : session?.user ? (
+            <UserDropdown
+              email={session.user.email || ""}
+              image={
+                session.user.image
+                  ? session.user.image.startsWith("http")
+                    ? session.user.image
+                    : constructFileUrl(session.user.image)
+                  : `https://avatar.vercel.sh/${session.user.email || ""}`
+              }
+              firstName={
+                sessionFirstName && sessionFirstName.length > 0
+                  ? sessionFirstName
+                  : session.user.email?.split("@")[0] || ""
+              }
+              userRole={userRole}
+            />
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm text-muted-foreground hover:text-foreground transition-all duration-300 px-3 py-1.5 rounded-lg hover:bg-white/5"
+              >
+                Login
+              </Link>
+              <Link href="/register">
+                <button className="inline-flex items-center justify-center whitespace-nowrap tracking-tight transition-all duration-300 cursor-pointer disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-1 focus-visible:ring-ring/40 bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 active:scale-95 gap-1.5 h-8 px-5 rounded-full text-sm font-medium shadow-lg hover:shadow-xl shadow-primary/20">
+                  Register
+                </button>
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden p-1.5 text-muted-foreground hover:text-foreground transition-all duration-300 rounded-lg hover:bg-white/5 active:scale-95"
+          aria-label="Toggle menu"
+        >
+          <Menu className="h-5 w-5 transition-transform duration-300" />
+        </button>
       </div>
-    </header>
+    </nav>
   );
 }

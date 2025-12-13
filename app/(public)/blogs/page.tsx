@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { getBlogs, getBlogCategories, getFeaturedBlogs, getTrendingBlogs, getLatestBlogs } from "@/app/data/blog/get-blogs";
-import { BlogFeed } from "./_components/BlogFeed";
+import { BlogFeedWrapper } from "./_components/BlogFeedWrapper";
 import { BlogFilters } from "./_components/BlogFilters";
 import { BlogHero } from "./_components/BlogHero";
 import { BlogSidebar } from "./_components/BlogSidebar";
@@ -46,9 +46,9 @@ export default async function BlogsPage({
   const current = params.current;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/10">
       <BlogHero />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 max-w-7xl">
         {error === "insufficient_points" && (
           <div className="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
             <p className="font-semibold">Insufficient Points</p>
@@ -62,7 +62,7 @@ export default async function BlogsPage({
           <div className="lg:col-span-8 xl:col-span-9">
             <BlogFilters categories={categories} currentCategory={categoryId} currentSort={sortBy} />
             <Suspense fallback={<div>Loading blogs...</div>}>
-              <BlogFeed blogs={blogsData.blogs} total={blogsData.total} currentPage={page} hasMore={blogsData.hasMore} />
+              <BlogFeedWrapper blogs={blogsData.blogs} total={blogsData.total} currentPage={page} hasMore={blogsData.hasMore} />
             </Suspense>
           </div>
 

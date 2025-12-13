@@ -1,33 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { StudentsGridSection } from "./StudentsGridSection";
 import { StudentsSkeleton } from "./StudentsSkeleton";
 import { StudentType } from "@/app/data/student/get-all-students";
+import { Input } from "@/components/ui/input";
+import { Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function StudentsPageClient() {
   const [students, setStudents] = useState<StudentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     async function fetchStudents() {
       try {
         setLoading(true);
         const response = await fetch("/api/students");
-        
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.details || errorData.error || "Failed to fetch students";
+          const errorMessage =
+            errorData.details ||
+            errorData.error ||
+            "Failed to fetch students";
           throw new Error(errorMessage);
         }
-        
+
         const data = await response.json();
         setStudents(data);
         setError(null);
       } catch (err) {
         console.error("Error fetching students:", err);
-        const errorMessage = err instanceof Error ? err.message : "Failed to load students. Please try again later.";
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Failed to load students. Please try again later.";
         setError(errorMessage);
         setStudents([]);
       } finally {
@@ -37,6 +47,22 @@ export function StudentsPageClient() {
 
     fetchStudents();
   }, []);
+
+  // Filter students based on search query
+  const filteredStudents = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return students;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return students.filter(
+      (student) =>
+        student.firstName.toLowerCase().includes(query) ||
+        student.lastName?.toLowerCase().includes(query) ||
+        student.email.toLowerCase().includes(query) ||
+        student.designation?.toLowerCase().includes(query)
+    );
+  }, [students, searchQuery]);
 
   if (loading) {
     return <StudentsSkeleton />;
@@ -52,10 +78,30 @@ export function StudentsPageClient() {
               <div className="mt-4 p-4 bg-muted rounded-lg text-sm text-left max-w-2xl mx-auto">
                 <p className="font-medium mb-2">Troubleshooting steps:</p>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Check that your <code className="bg-background px-1 rounded">DATABASE_URL</code> is set correctly in <code className="bg-background px-1 rounded">.env.local</code></li>
-                  <li>If using Neon, ensure your database is not paused (free tier databases auto-pause after inactivity)</li>
-                  <li>Verify your database connection string includes <code className="bg-background px-1 rounded">?sslmode=require</code></li>
-                  <li>Restart your development server after updating environment variables</li>
+                  <li>
+                    Check that your{" "}
+                    <code className="bg-background px-1 rounded">
+                      DATABASE_URL
+                    </code>{" "}
+                    is set correctly in{" "}
+                    <code className="bg-background px-1 rounded">
+                      .env.local
+                    </code>
+                  </li>
+                  <li>
+                    If using Neon, ensure your database is not paused (free tier
+                    databases auto-pause after inactivity)
+                  </li>
+                  <li>
+                    Verify your database connection string includes{" "}
+                    <code className="bg-background px-1 rounded">
+                      ?sslmode=require
+                    </code>
+                  </li>
+                  <li>
+                    Restart your development server after updating environment
+                    variables
+                  </li>
                 </ul>
               </div>
             )}
@@ -65,5 +111,39 @@ export function StudentsPageClient() {
     );
   }
 
-  return <StudentsGridSection students={students} />;
+  return (
+    <div className="space-y-6 pt-8 md:pt-12">
+      {/* Search Bar */}
+      <div className="container mx-auto px-4 md:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search students by name, email, or designation..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10 h-12"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-3 text-sm text-muted-foreground text-center">
+              {filteredStudents.length} student
+              {filteredStudents.length !== 1 ? "s" : ""} found
+            </div>
+          )}
+        </div>
+      </div>
+
+      <StudentsGridSection students={filteredStudents} />
+    </div>
+  );
 }

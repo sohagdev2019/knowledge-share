@@ -31,10 +31,6 @@ export async function getBlogs(params: GetBlogsParams = {}) {
     isDraft: false,
   };
 
-  if (categoryId) {
-    where.categoryId = categoryId;
-  }
-
   if (authorId) {
     where.authorId = authorId;
   }
@@ -43,12 +39,30 @@ export async function getBlogs(params: GetBlogsParams = {}) {
     where.isFeatured = featured;
   }
 
+  // Handle search and categoryId together
   if (search) {
-    where.OR = [
+    const searchConditions = [
       { title: { contains: search, mode: "insensitive" } },
       { excerpt: { contains: search, mode: "insensitive" } },
       { content: { contains: search, mode: "insensitive" } },
     ];
+
+    if (categoryId) {
+      // When both categoryId and search are provided, use AND to combine them
+      // This ensures we search within the selected category
+      where.AND = [
+        { categoryId },
+        {
+          OR: searchConditions,
+        },
+      ];
+    } else {
+      // If no categoryId, just use OR for search
+      where.OR = searchConditions;
+    }
+  } else if (categoryId) {
+    // If only categoryId is provided (no search), set it normally
+    where.categoryId = categoryId;
   }
 
   const orderBy: any = {};

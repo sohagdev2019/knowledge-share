@@ -7,7 +7,7 @@ export default async function CreatorStoriesPage() {
   const creators = await getAllCreators();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/10">
       <CreatorHeroSection />
       <CreatorsGridSection creators={creators} />
       <CreatorCTASection />

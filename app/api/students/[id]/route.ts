@@ -67,7 +67,7 @@ export async function GET(
               courseId: true,
               certificateEarned: true,
               createdAt: true,
-              course: {
+              Course: {
                 select: {
                   id: true,
                   title: true,
@@ -86,14 +86,14 @@ export async function GET(
             select: {
               id: true,
               lessonId: true,
-              completedAt: true,
-              lesson: {
+              updatedAt: true,
+              Lesson: {
                 select: {
                   id: true,
                   title: true,
-                  chapter: {
+                  Chapter: {
                     select: {
-                      course: {
+                      Course: {
                         select: {
                           id: true,
                           title: true,
@@ -110,7 +110,7 @@ export async function GET(
             select: {
               id: true,
               pointsEarned: true,
-              createdAt: true,
+              submittedAt: true,
             },
           },
           assignmentSubmissions: {
@@ -120,7 +120,7 @@ export async function GET(
             select: {
               id: true,
               grade: true,
-              createdAt: true,
+              submittedAt: true,
             },
           },
         },
