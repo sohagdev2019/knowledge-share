@@ -1,3 +1,5 @@
+"use client";
+
 import {
   BookOpen,
   ChevronDownIcon,
@@ -18,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { useSignOut } from "@/hooks/use-singout";
 
@@ -31,6 +33,7 @@ interface iAppProps {
 
 export function UserDropdown({ email, firstName, image, userRole }: iAppProps) {
   const handleSignOut = useSignOut();
+  const router = useRouter();
   const displayName = firstName || email.split("@")[0];
   const displayInitial = displayName.charAt(0).toUpperCase();
 
@@ -50,6 +53,10 @@ export function UserDropdown({ email, firstName, image, userRole }: iAppProps) {
         { icon: UserRound, label: "Profile", href: "/dashboard/profile" },
         { icon: UserRound, label: "Settings", href: "/dashboard/settings" },
       ];
+
+  const handleNavigation = (href: string) => {
+    router.push(href);
+  };
 
   return (
     <DropdownMenu>
@@ -85,13 +92,11 @@ export function UserDropdown({ email, firstName, image, userRole }: iAppProps) {
             return (
               <DropdownMenuItem 
                 key={`${item.href}-${index}`} 
-                asChild
+                onClick={() => handleNavigation(item.href)}
                 className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50 transition-colors"
               >
-                <Link href={item.href}>
-                  <Icon size={16} className="opacity-60" aria-hidden="true" />
-                  <span>{item.label}</span>
-                </Link>
+                <Icon size={16} className="opacity-60" aria-hidden="true" />
+                <span>{item.label}</span>
               </DropdownMenuItem>
             );
           })}
