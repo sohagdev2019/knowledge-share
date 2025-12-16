@@ -13,6 +13,13 @@
 
 # testing
 /coverage
+/.nyc_output
+/playwright-report
+/test-results
+/playwright/.cache
+/cypress/videos
+/cypress/screenshots
+/.cypress
 
 # next.js
 /.next/
