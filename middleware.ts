@@ -1,35 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Lightweight cookie check - avoids importing heavy dependencies
+// Lightweight cookie check - avoids importing any heavy dependencies
+// Admin routes are fully protected by requireAdmin() in app/admin/layout.tsx
+// This middleware just does a quick cookie check to redirect obvious non-authenticated requests
 function hasSessionCookie(request: NextRequest): boolean {
   const sessionToken = request.cookies.get("next-auth.session-token");
   return !!sessionToken;
 }
 
-// Lightweight authentication middleware using dynamic import
+// Lightweight authentication middleware - cookie check only
+// Full auth verification happens in admin layout via requireAdmin()
 async function authMiddleware(request: NextRequest) {
-  // First, do a lightweight cookie check to avoid loading auth if no cookie exists
+  // Simple cookie check - if no session cookie, redirect to login
+  // The admin layout will handle full auth verification with requireAdmin()
   if (!hasSessionCookie(request)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Only dynamically import auth when we have a cookie (reduces bundle size)
-  try {
-    // Dynamic import prevents bundling Prisma/NextAuth into middleware
-    const { auth } = await import("@/lib/auth");
-    const session = await auth();
-
-    if (!session?.user) {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
-
-    return NextResponse.next();
-  } catch (error) {
-    console.error("Auth middleware error:", error);
-    // If auth check fails, allow the request to continue (fail open for non-admin routes)
-    // Admin routes will be protected by their own layout/page-level auth
-    return NextResponse.next();
-  }
+  // Allow request to proceed - admin layout will verify auth properly
+  return NextResponse.next();
 }
 
 export const config = {
