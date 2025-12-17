@@ -242,8 +242,8 @@ export function LoginForm() {
   }
 
   return (
-    <div className="w-full flex flex-col gap-4" style={{ width: 'calc(100% + 10px)', maxWidth: 'calc(100% + 10px)' }}>
-      <Card className="w-full">
+    <div className="w-full flex flex-col gap-4">
+      <Card className="w-full" style={{ width: 'calc(100% + 10px)', maxWidth: 'calc(100% + 10px)' }}>
         <CardContent className="pt-6 px-0">
           <div className="flex items-center w-full">
             <div className="w-full space-y-0">

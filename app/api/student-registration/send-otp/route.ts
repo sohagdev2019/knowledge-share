@@ -16,6 +16,7 @@ const sendOtpSchema = z.object({
     .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.enum(["user", "teacher"]).optional().default("user"),
 });
 
 export async function POST(req: NextRequest) {
@@ -33,9 +34,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { firstName, lastName, username, email, password } = validation.data;
+    const { firstName, lastName, username, email, password, role } = validation.data;
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedUsername = username.toLowerCase().trim();
+    const userRole = role || "user"; // Default to "user" (student)
 
     // Check if email already exists
     const existingUserByEmail = await prisma.user.findUnique({
@@ -78,6 +80,7 @@ export async function POST(req: NextRequest) {
       email: normalizedEmail,
       password, // Will be hashed during verification
       otp,
+      role: userRole,
     };
 
     // Delete any existing verification for this email
@@ -117,7 +120,8 @@ export async function POST(req: NextRequest) {
         throw new Error("BREVO_SENDER_EMAIL is required");
       }
 
-      sendSmtpEmail.subject = "Verify your Student Registration - Edupeak";
+      const accountType = userRole === "teacher" ? "Teacher" : "Student";
+      sendSmtpEmail.subject = `Verify your ${accountType} Registration - Edupeak`;
       sendSmtpEmail.htmlContent = otpEmailTemplate({ otp });
       sendSmtpEmail.sender = { name: senderName, email: senderEmail };
       sendSmtpEmail.to = [{ email: normalizedEmail }];
