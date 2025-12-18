@@ -86,7 +86,7 @@ export default function BecomeAnInstructorPage() {
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
               <Button size="lg" className="h-12 px-8 text-base" asChild>
-                <Link href="/instructor-registration">Register Now</Link>
+                <Link href="/register?type=teacher">Register Now</Link>
               </Button>
               <Button
                 size="lg"
@@ -137,7 +137,7 @@ export default function BecomeAnInstructorPage() {
                   Community Stories
                 </p>
                 <p className="text-2xl font-bold text-foreground">
-                  “Teaching here changed my life.”
+                  "Teaching here changed my life."
                 </p>
                 <p className="text-xs text-muted-foreground">
                   — Maya Chen, Product Design Lead
@@ -231,10 +231,6 @@ export default function BecomeAnInstructorPage() {
           </div>
         </div>
       </section>
-
-
     </div>
   );
 }
-
-

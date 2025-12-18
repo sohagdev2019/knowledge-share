@@ -18,7 +18,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState, useTransition, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 const RegistrationSchema = z
@@ -59,8 +59,11 @@ type AccountType = "student" | "teacher";
 
 export default function RegistrationForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const typeParam = searchParams.get("type");
+  const initialAccountType: AccountType = typeParam === "teacher" ? "teacher" : "student";
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [accountType, setAccountType] = useState<AccountType>("student");
+  const [accountType, setAccountType] = useState<AccountType>(initialAccountType);
   const [isSubmitting, startRegistrationTransition] = useTransition();
   const [otp, setOtp] = useState("");
   const [verifiedEmail, setVerifiedEmail] = useState("");
@@ -128,6 +131,13 @@ export default function RegistrationForm() {
   const handleAccountTypeChange = (type: AccountType) => {
     if (type === accountType || step !== 1) return;
     setAccountTypeChanging(true);
+    
+    // Update URL query parameter
+    const newUrl = type === "teacher" 
+      ? "/register?type=teacher"
+      : "/register?type=student";
+    router.replace(newUrl, { scroll: false });
+    
     setTimeout(() => {
       setAccountType(type);
       setTimeout(() => {

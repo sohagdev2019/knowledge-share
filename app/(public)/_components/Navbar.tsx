@@ -17,7 +17,7 @@ const supportItems = [
 
 const instructorItems = [
   { name: "Become an Instructor", href: "/become-an-instructor" },
-  { name: "Instructors List", href: "#" },
+  { name: "Instructors List", href: "/instructors" },
 ];
 
 const studentItems = [{ name: "Students Gallery", href: "/students-gallery" }];

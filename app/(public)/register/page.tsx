@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import RegistrationForm from "./_components/RegistrationForm";
 
 export default function StudentRegistrationPage() {
@@ -15,7 +16,9 @@ export default function StudentRegistrationPage() {
               Back to Home
             </Link>
           </div>
-          <RegistrationForm />
+          <Suspense fallback={<div>Loading...</div>}>
+            <RegistrationForm />
+          </Suspense>
         </div>
       </div>
     </div>
