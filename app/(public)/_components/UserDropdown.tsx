@@ -75,7 +75,7 @@ export function UserDropdown({ email, firstName, image, userRole }: iAppProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="min-w-48 bg-background/95 backdrop-blur-md border-border/50 shadow-xl"
+        className="min-w-48 bg-background/95 backdrop-blur-md border-border/50 shadow-xl z-[70]"
       >
         <DropdownMenuLabel className="flex min-w-0 flex-col">
           <span className="text-foreground truncate text-sm font-medium">
