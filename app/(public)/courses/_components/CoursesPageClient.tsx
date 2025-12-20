@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { PublicCourseType } from "@/app/data/course/get-all-courses";
+import { PopularInstructorType } from "@/app/data/instructor/get-popular-instructors";
 import {
   PublicCourseCard,
 } from "../../_components/PublicCourseCard";
+import { PopularInstructorsSlider } from "./PopularInstructorsSlider";
+import { CourseSliderSection } from "./CourseSliderSection";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -13,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, X } from "lucide-react";
+import { Search, X, Grid3x3, ArrowUpDown, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { courseCategories } from "@/lib/zodSchemas";
 
@@ -21,13 +25,95 @@ const courseLevels = ["Beginner", "Intermediate", "Advanced"] as const;
 
 interface CoursesPageClientProps {
   initialCourses: PublicCourseType[];
+  instructors: PopularInstructorType[];
 }
 
-export function CoursesPageClient({ initialCourses }: CoursesPageClientProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedLevel, setSelectedLevel] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("newest");
+export function CoursesPageClient({ initialCourses, instructors }: CoursesPageClientProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const isUpdatingUrlRef = useRef(false);
+  
+  // Initialize state from URL params
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get("search") || ""
+  );
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    searchParams.get("category") || "all"
+  );
+  const [selectedLevel, setSelectedLevel] = useState<string>(
+    searchParams.get("level") || "all"
+  );
+  const [sortBy, setSortBy] = useState<string>(
+    searchParams.get("sort") || "best-match"
+  );
+  const [viewMode, setViewMode] = useState<"grid" | "compact">(
+    (searchParams.get("view") as "grid" | "compact") || "grid"
+  );
+
+  // Sync state with URL params when they change externally (browser back/forward)
+  useEffect(() => {
+    // Skip if we're updating the URL ourselves
+    if (isUpdatingUrlRef.current) {
+      isUpdatingUrlRef.current = false;
+      return;
+    }
+
+    const urlSearch = searchParams.get("search") || "";
+    const urlCategory = searchParams.get("category") || "all";
+    const urlLevel = searchParams.get("level") || "all";
+    const urlSort = searchParams.get("sort") || "best-match";
+    const urlView = (searchParams.get("view") as "grid" | "compact") || "grid";
+
+    if (urlSearch !== searchQuery) setSearchQuery(urlSearch);
+    if (urlCategory !== selectedCategory) setSelectedCategory(urlCategory);
+    if (urlLevel !== selectedLevel) setSelectedLevel(urlLevel);
+    if (urlSort !== sortBy) setSortBy(urlSort);
+    if (urlView !== viewMode) setViewMode(urlView);
+  }, [searchParams, searchQuery, selectedCategory, selectedLevel, sortBy]);
+
+  // Update URL when filters change (without page reload)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    }
+    if (selectedCategory !== "all") {
+      params.set("category", selectedCategory);
+    }
+    if (selectedLevel !== "all") {
+      params.set("level", selectedLevel);
+    }
+    if (sortBy !== "best-match") {
+      params.set("sort", sortBy);
+    }
+    if (viewMode !== "grid") {
+      params.set("view", viewMode);
+    }
+    
+    const queryString = params.toString();
+    const newUrl = queryString ? `/courses?${queryString}` : "/courses";
+    const currentSearch = window.location.search;
+    const newSearch = queryString ? `?${queryString}` : "";
+    
+    // Only update URL if it's different from current (avoid infinite loops)
+    if (currentSearch !== newSearch) {
+      isUpdatingUrlRef.current = true;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchQuery, selectedCategory, selectedLevel, sortBy, viewMode, router]);
+
+  // Get courses by category for featured sections
+  const coursesByCategory = useMemo(() => {
+    const categories = courseCategories.slice(0, 3); // Show top 3 categories
+    return categories.map((category) => ({
+      category,
+      courses: initialCourses
+        .filter((c) => c.category === category)
+        .sort((a, b) => (b.enrollmentCount ?? 0) - (a.enrollmentCount ?? 0))
+        .slice(0, 4), // Top 4 courses per category
+    }));
+  }, [initialCourses]);
 
   // Filter and search courses
   const filteredCourses = useMemo(() => {
@@ -56,31 +142,45 @@ export function CoursesPageClient({ initialCourses }: CoursesPageClientProps) {
       filtered = filtered.filter((course) => course.level === selectedLevel);
     }
 
-    // Sort
+    // Apply sort
     switch (sortBy) {
+      case "best-match":
+        // Best match: prioritize by relevance (rating, enrollment, recency)
+        filtered.sort((a, b) => {
+          const aScore = (a.averageRating ?? 0) * 100 + (a.enrollmentCount ?? 0) * 10 + 
+            (new Date(a.createdAt).getTime() / 1000000);
+          const bScore = (b.averageRating ?? 0) * 100 + (b.enrollmentCount ?? 0) * 10 + 
+            (new Date(b.createdAt).getTime() / 1000000);
+          return bScore - aScore;
+        });
+        break;
+      case "best-sellers":
+        filtered.sort((a, b) => (b.enrollmentCount ?? 0) - (a.enrollmentCount ?? 0));
+        break;
       case "newest":
         filtered.sort(
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         break;
-      case "oldest":
-        filtered.sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
+      case "best-rated":
+        filtered.sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0));
+        break;
+      case "trending":
+        // Trending: recent courses with high enrollment
+        filtered.sort((a, b) => {
+          const daysSinceA = (Date.now() - new Date(a.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+          const daysSinceB = (Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+          const aTrend = (a.enrollmentCount ?? 0) / Math.max(daysSinceA, 1) + (a.averageRating ?? 0) * 50;
+          const bTrend = (b.enrollmentCount ?? 0) / Math.max(daysSinceB, 1) + (b.averageRating ?? 0) * 50;
+          return bTrend - aTrend;
+        });
         break;
       case "price-low":
         filtered.sort((a, b) => a.price - b.price);
         break;
       case "price-high":
         filtered.sort((a, b) => b.price - a.price);
-        break;
-      case "title-asc":
-        filtered.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      case "title-desc":
-        filtered.sort((a, b) => b.title.localeCompare(a.title));
         break;
     }
 
@@ -91,17 +191,21 @@ export function CoursesPageClient({ initialCourses }: CoursesPageClientProps) {
     setSearchQuery("");
     setSelectedCategory("all");
     setSelectedLevel("all");
-    setSortBy("newest");
+    setSortBy("best-match");
+    router.replace("/courses", { scroll: false });
   };
 
   const hasActiveFilters =
     searchQuery.trim() !== "" ||
     selectedCategory !== "all" ||
     selectedLevel !== "all" ||
-    sortBy !== "newest";
+    sortBy !== "best-match";
 
   return (
     <div className="mt-5 space-y-6 pt-8 md:pt-12">
+      {/* Animated Slider Section with Tabs - At the top */}
+      <CourseSliderSection courses={initialCourses} />
+
       {/* Header */}
       <div className="flex flex-col space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">
@@ -167,21 +271,6 @@ export function CoursesPageClient({ initialCourses }: CoursesPageClientProps) {
             </SelectContent>
           </Select>
 
-          {/* Sort Filter */}
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="title-asc">Title: A-Z</SelectItem>
-              <SelectItem value="title-desc">Title: Z-A</SelectItem>
-            </SelectContent>
-          </Select>
-
           {/* Clear Filters Button */}
           {hasActiveFilters && (
             <Button
@@ -203,11 +292,90 @@ export function CoursesPageClient({ initialCourses }: CoursesPageClientProps) {
         </div>
       </div>
 
-      {/* Courses Grid */}
+
+      {/* Top Bar: Price Info, View Toggle, and Sort Options */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-3 px-4 bg-muted/50 rounded-lg border border-border/50">
+        {/* Left: Price Info */}
+        <p className="text-xs text-muted-foreground whitespace-nowrap">
+          Price is in US dollars and excludes tax and handling fees
+        </p>
+
+        {/* Right: View Toggle and Sort Buttons */}
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* View Toggle */}
+          <div className="flex items-center gap-1 border-r border-border pr-4">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded transition-colors ${
+                viewMode === "grid"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-label="Grid view"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("compact")}
+              className={`p-1.5 rounded transition-colors ${
+                viewMode === "compact"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-label="Compact view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Sort Buttons */}
+          <div className="flex items-center gap-1 flex-wrap">
+            {[
+              { value: "best-match", label: "Best match" },
+              { value: "best-sellers", label: "Best sellers" },
+              { value: "newest", label: "Newest" },
+              { value: "best-rated", label: "Best rated" },
+              { value: "trending", label: "Trending" },
+              { value: "price-low", label: "Price", icon: ArrowUpDown },
+            ].map((option) => {
+              const isActive = sortBy === option.value;
+              const Icon = option.icon;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setSortBy(option.value)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                    isActive
+                      ? "bg-foreground text-background"
+                      : "bg-background text-foreground hover:bg-muted border border-border"
+                  }`}
+                >
+                  <span className="flex items-center gap-1">
+                    {option.label}
+                    {Icon && <Icon className="h-3 w-3" />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Courses Grid/Compact */}
       {filteredCourses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+              : "grid grid-cols-1 gap-4"
+          }
+        >
           {filteredCourses.map((course) => (
-            <PublicCourseCard key={course.id} data={course} />
+            <PublicCourseCard 
+              key={course.id} 
+              data={course} 
+              variant={viewMode === "compact" ? "compact" : "default"}
+            />
           ))}
         </div>
       ) : (
@@ -225,7 +393,37 @@ export function CoursesPageClient({ initialCourses }: CoursesPageClientProps) {
           )}
         </div>
       )}
+
+      {/* Featured Courses by Category - Only show when no active filters */}
+      {!hasActiveFilters && coursesByCategory.map(({ category, courses }) => {
+        if (courses.length === 0) return null;
+        return (
+          <section key={category} className="mt-12 mb-8">
+            <div className="mb-6">
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">
+                Featured {category} Courses
+              </h2>
+              <p className="text-muted-foreground">
+                Top {category} courses to get you started
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {courses.map((course) => (
+                <PublicCourseCard 
+                  key={course.id} 
+                  data={course} 
+                  variant="default"
+                />
+              ))}
+            </div>
+          </section>
+        );
+      })}
+
+      {/* Popular Instructors Slider */}
+      <PopularInstructorsSlider instructors={instructors} />
     </div>
   );
 }
+
 

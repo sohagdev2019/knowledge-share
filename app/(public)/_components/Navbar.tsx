@@ -17,41 +17,51 @@ const instructorItems = [
 ];
 
 
+// Helper function to build course URL with query params
+function buildCourseUrl(category?: string, search?: string): string {
+  const params = new URLSearchParams();
+  if (category) params.set("category", category);
+  if (search) params.set("search", search);
+  const queryString = params.toString();
+  return queryString ? `/courses?${queryString}` : "/courses";
+}
+
 // Browse menu structure with nested submenus
+// Maps to actual category names from the database
 const browseMenuItems = [
   {
     name: "Web Development",
-    href: "/browse/web-development",
+    href: buildCourseUrl("Development"),
     submenu: [
-      { name: "JavaScript", href: "/browse/web-development/javascript" },
-      { name: "React", href: "/browse/web-development/react" },
-      { name: "Vue.js", href: "/browse/web-development/vue" },
-      { name: "Angular", href: "/browse/web-development/angular" },
-      { name: "Node.js", href: "/browse/web-development/nodejs" },
-      { name: "Python", href: "/browse/web-development/python" },
+      { name: "JavaScript", href: buildCourseUrl("Development", "JavaScript") },
+      { name: "React", href: buildCourseUrl("Development", "React") },
+      { name: "Vue.js", href: buildCourseUrl("Development", "Vue") },
+      { name: "Angular", href: buildCourseUrl("Development", "Angular") },
+      { name: "Node.js", href: buildCourseUrl("Development", "Node.js") },
+      { name: "Python", href: buildCourseUrl("Development", "Python") },
     ],
   },
   {
     name: "Design",
-    href: "/browse/design",
+    href: buildCourseUrl("Design"),
     submenu: [
-      { name: "Graphic Design", href: "/browse/design/graphic-design" },
-      { name: "Illustrator", href: "/browse/design/illustrator" },
-      { name: "UX/UI Design", href: "/browse/design/ux-ui-design" },
-      { name: "Figma Design", href: "/browse/design/figma-design" },
-      { name: "Adobe XD", href: "/browse/design/adobe-xd" },
-      { name: "Sketch", href: "/browse/design/sketch" },
-      { name: "Icon Design", href: "/browse/design/icon-design" },
-      { name: "Photoshop", href: "/browse/design/photoshop" },
+      { name: "Graphic Design", href: buildCourseUrl("Design", "Graphic Design") },
+      { name: "Illustrator", href: buildCourseUrl("Design", "Illustrator") },
+      { name: "UX/UI Design", href: buildCourseUrl("Design", "UX/UI Design") },
+      { name: "Figma Design", href: buildCourseUrl("Design", "Figma") },
+      { name: "Adobe XD", href: buildCourseUrl("Design", "Adobe XD") },
+      { name: "Sketch", href: buildCourseUrl("Design", "Sketch") },
+      { name: "Icon Design", href: buildCourseUrl("Design", "Icon Design") },
+      { name: "Photoshop", href: buildCourseUrl("Design", "Photoshop") },
     ],
   },
-  { name: "Mobile App", href: "/browse/mobile-app" },
-  { name: "IT Software", href: "/browse/it-software" },
-  { name: "Marketing", href: "/browse/marketing" },
-  { name: "Music", href: "/browse/music" },
-  { name: "Lifestyle", href: "/browse/lifestyle" },
-  { name: "Business", href: "/browse/business" },
-  { name: "Photography", href: "/browse/photography" },
+  { name: "Mobile App", href: buildCourseUrl("Development", "Mobile") },
+  { name: "IT Software", href: buildCourseUrl("IT & Software") },
+  { name: "Marketing", href: buildCourseUrl("Marketing") },
+  { name: "Music", href: buildCourseUrl("Music") },
+  { name: "Lifestyle", href: buildCourseUrl("Health & Fitness") },
+  { name: "Business", href: buildCourseUrl("Business") },
+  { name: "Photography", href: buildCourseUrl("Photography") },
 ];
 
 function useHoverMenu(delay = 120) {
@@ -187,6 +197,8 @@ function MultiLevelDropdown({
   const { open, handleEnter, handleLeave, toggle, setOpen } = useHoverMenu();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const submenuRef = useRef<HTMLDivElement>(null);
+  const blankSpaceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -206,6 +218,16 @@ function MultiLevelDropdown({
       };
     }
   }, [open, setOpen]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (blankSpaceTimeoutRef.current) {
+        clearTimeout(blankSpaceTimeoutRef.current);
+      }
+    };
+  }, []);
+
 
   return (
     <div
@@ -236,8 +258,45 @@ function MultiLevelDropdown({
             ? "opacity-100 translate-y-0 pointer-events-auto scale-100"
             : "opacity-0 -translate-y-2 pointer-events-none scale-95"
         }`}
-        onMouseEnter={handleEnter}
-        onMouseLeave={handleLeave}
+        onMouseMove={(e) => {
+          // Clear any pending close timeout
+          if (blankSpaceTimeoutRef.current) {
+            clearTimeout(blankSpaceTimeoutRef.current);
+            blankSpaceTimeoutRef.current = null;
+          }
+          
+          // Check if mouse is over an interactive element
+          const target = e.target as HTMLElement;
+          const isOverLink = target.closest('a[href]');
+          const isOverButton = target.closest('button');
+          // Check if over a menu item container (div with relative class containing a link)
+          const menuItemContainer = target.closest('.relative');
+          const isOverMenuItem = menuItemContainer && menuItemContainer.querySelector('a[href]');
+          
+          // If not over any interactive element, schedule close
+          if (!isOverLink && !isOverButton && !isOverMenuItem) {
+            blankSpaceTimeoutRef.current = setTimeout(() => {
+              handleLeave();
+              setHoveredItem(null);
+            }, 200); // Small delay to allow movement between items
+          }
+        }}
+        onMouseLeave={(e) => {
+          // Clear timeout if leaving
+          if (blankSpaceTimeoutRef.current) {
+            clearTimeout(blankSpaceTimeoutRef.current);
+            blankSpaceTimeoutRef.current = null;
+          }
+          
+          // Close when leaving the dropdown container
+          const relatedTarget = e.relatedTarget as HTMLElement;
+          // Close if leaving to outside the dropdown or to the button
+          const isLeavingToButton = relatedTarget?.closest('button[aria-expanded]') !== null;
+          if (!dropdownRef.current?.contains(relatedTarget) && !isLeavingToButton) {
+            handleLeave();
+            setHoveredItem(null);
+          }
+        }}
       >
         <div className="flex">
           {/* Primary menu */}
@@ -246,8 +305,31 @@ function MultiLevelDropdown({
               <div
                 key={item.name}
                 className="relative"
-                onMouseEnter={() => item.submenu && setHoveredItem(item.name)}
-                onMouseLeave={() => setHoveredItem(null)}
+                onMouseEnter={() => {
+                  if (item.submenu) {
+                    setHoveredItem(item.name);
+                    handleEnter(); // Keep dropdown open
+                  } else {
+                    handleEnter(); // Keep dropdown open for items without submenu
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  // Only clear hoveredItem if not moving to submenu or another menu item
+                  const relatedTarget = e.relatedTarget as HTMLElement;
+                  const isMovingToSubmenu = submenuRef.current?.contains(relatedTarget);
+                  const isMovingToMenuItem = relatedTarget?.closest('.relative') && 
+                    relatedTarget?.closest('.relative') !== e.currentTarget;
+                  
+                  if (!isMovingToSubmenu && !isMovingToMenuItem) {
+                    if (item.submenu) {
+                      setHoveredItem(null);
+                    }
+                    // If leaving to blank space, close dropdown
+                    if (!dropdownRef.current?.contains(relatedTarget)) {
+                      handleLeave();
+                    }
+                  }
+                }}
               >
                 <Link
                   href={item.href}
@@ -276,32 +358,41 @@ function MultiLevelDropdown({
             ))}
           </div>
 
-          {/* Secondary menu (submenu) */}
-          {hoveredItem && items.find((item) => item.name === hoveredItem)?.submenu && (
-            <div className={`py-2 min-w-[200px] border-l border-border bg-background/98 rounded-r-xl transition-all duration-300 ease-out ${
-              hoveredItem ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-            }`}>
-              {items
-                .find((item) => item.name === hoveredItem)
-                ?.submenu?.map((subItem, subIndex) => (
-                  <Link
-                    key={subItem.name}
-                    href={subItem.href}
-                    className={`group relative block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all duration-300 ease-out rounded-md overflow-hidden ${
-                      hoveredItem ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"
-                    }`}
-                    style={{
-                      transitionDelay: hoveredItem ? `${subIndex * 30}ms` : "0ms",
-                    }}
-                  >
-                    <span className="relative z-10 transition-transform duration-300 group-hover:translate-x-1">
-                      {subItem.name}
-                    </span>
-                    <span className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md" />
-                  </Link>
-                ))}
-            </div>
-          )}
+          {/* Secondary menu (submenu) - Always render to prevent gaps */}
+          <div 
+            ref={submenuRef}
+            className={`py-2 min-w-[200px] border-l border-border bg-background/98 rounded-r-xl transition-all duration-300 ease-out ${
+              hoveredItem && items.find((item) => item.name === hoveredItem)?.submenu
+                ? "opacity-100 translate-x-0 pointer-events-auto"
+                : "opacity-0 -translate-x-2 pointer-events-none"
+            }`}
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+          >
+            {hoveredItem && items.find((item) => item.name === hoveredItem)?.submenu && (
+              <>
+                {items
+                  .find((item) => item.name === hoveredItem)
+                  ?.submenu?.map((subItem, subIndex) => (
+                    <Link
+                      key={subItem.name}
+                      href={subItem.href}
+                      className={`group relative block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all duration-300 ease-out rounded-md overflow-hidden ${
+                        hoveredItem ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"
+                      }`}
+                      style={{
+                        transitionDelay: hoveredItem ? `${subIndex * 30}ms` : "0ms",
+                      }}
+                    >
+                      <span className="relative z-10 transition-transform duration-300 group-hover:translate-x-1">
+                        {subItem.name}
+                      </span>
+                      <span className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md" />
+                    </Link>
+                  ))}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

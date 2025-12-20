@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,11 +17,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Send, Building2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
-export default function ContactPage() {
+function ContactForm() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Pre-fill form from URL parameters
+  useEffect(() => {
+    const subjectParam = searchParams.get("subject");
+    const messageParam = searchParams.get("message");
+    
+    if (subjectParam) {
+      setSubject(subjectParam);
+    }
+    if (messageParam) {
+      setMessage(decodeURIComponent(messageParam));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -124,6 +139,9 @@ export default function ContactPage() {
                       Feature Request
                     </SelectItem>
                     <SelectItem value="Bug Report">Bug Report</SelectItem>
+                    <SelectItem value="Resume Submission">
+                      Resume Submission
+                    </SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -236,5 +254,36 @@ export default function ContactPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="pb-12 pt-8 md:pt-16">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+              Get in touch
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Have questions about EduPeak? We're here to help.
+            </p>
+          </div>
+          <div className="max-w-xl mx-auto px-4">
+            <div className="p-6 md:p-8 rounded-2xl border border-border/50 bg-white dark:bg-zinc-900 animate-pulse">
+              <div className="space-y-5">
+                <div className="h-11 bg-muted rounded-xl" />
+                <div className="h-11 bg-muted rounded-xl" />
+                <div className="h-32 bg-muted rounded-xl" />
+                <div className="h-11 bg-muted rounded-xl" />
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ContactForm />
+    </Suspense>
   );
 }

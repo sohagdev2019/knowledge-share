@@ -2,11 +2,38 @@ import "server-only";
 
 import { prisma } from "@/lib/db";
 
-export async function getAllCourses() {
+interface GetCoursesByCategoryParams {
+  category?: string;
+  subcategory?: string;
+}
+
+export async function getCoursesByCategory({
+  category,
+  subcategory,
+}: GetCoursesByCategoryParams = {}) {
+  const where: any = {
+    status: "Published",
+  };
+
+  // Filter by category if provided
+  if (category) {
+    where.category = category;
+  }
+
+  // If subcategory is provided, also filter by title/description containing the subcategory
+  if (subcategory) {
+    where.AND = [
+      {
+        OR: [
+          { title: { contains: subcategory, mode: "insensitive" } },
+          { smallDescription: { contains: subcategory, mode: "insensitive" } },
+        ],
+      },
+    ];
+  }
+
   const courses = await prisma.course.findMany({
-    where: {
-      status: "Published",
-    },
+    where,
     orderBy: {
       createdAt: "desc",
     },
@@ -21,17 +48,6 @@ export async function getAllCourses() {
       duration: true,
       category: true,
       createdAt: true,
-      user: {
-        select: {
-          firstName: true,
-          lastName: true,
-        },
-      },
-      ratings: {
-        select: {
-          rating: true,
-        },
-      },
       _count: {
         select: {
           enrollment: {
@@ -40,7 +56,6 @@ export async function getAllCourses() {
             },
           },
           chapter: true,
-          ratings: true,
         },
       },
       chapter: {
@@ -62,18 +77,6 @@ export async function getAllCourses() {
       0
     );
 
-    // Calculate average rating
-    const ratings = course.ratings.map((r) => r.rating);
-    const averageRating =
-      ratings.length > 0
-        ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
-        : 0;
-
-    // Get instructor name
-    const instructorName = course.user.lastName
-      ? `${course.user.firstName} ${course.user.lastName}`
-      : course.user.firstName;
-
     return {
       id: course.id,
       title: course.title,
@@ -88,13 +91,11 @@ export async function getAllCourses() {
       enrollmentCount: course._count.enrollment,
       chapterCount: course._count.chapter,
       lessonCount: totalLessons,
-      averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
-      reviewCount: course._count.ratings,
-      instructorName,
     };
   });
 
   return data;
 }
 
-export type PublicCourseType = Awaited<ReturnType<typeof getAllCourses>>[0];
+export type CoursesByCategoryType = Awaited<ReturnType<typeof getCoursesByCategory>>[0];
+
