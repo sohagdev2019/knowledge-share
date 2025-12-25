@@ -1,0 +1,50 @@
+{
+  "PERSONAL": {
+    "features": {
+      "certificates": true,
+      "downloads": true,
+      "team_roles": false,
+      "sso": false,
+      "api_access": false
+    },
+    "limits": {
+      "max_instructors": 1,
+      "max_students": 300,
+      "max_courses": 20,
+      "storage_gb": 50,
+      "emails_per_month": 5000
+    }
+  },
+  "TEAM": {
+    "features": {
+      "certificates": true,
+      "downloads": true,
+      "team_roles": true,
+      "sso": false,
+      "api_access": true
+    },
+    "limits": {
+      "max_instructors": 10,
+      "max_students": 5000,
+      "max_courses": 200,
+      "storage_gb": 500,
+      "emails_per_month": 50000
+    }
+  },
+  "ENTERPRISE": {
+    "features": {
+      "certificates": true,
+      "downloads": true,
+      "team_roles": true,
+      "sso": true,
+      "api_access": true
+    },
+    "limits": {
+      "max_instructors": 9999,
+      "max_students": 999999,
+      "max_courses": 999999,
+      "storage_gb": 9999,
+      "emails_per_month": 999999
+    }
+  }
+}

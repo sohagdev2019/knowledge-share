@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { Check, X, BookOpen, Users, Award, BarChart3, Download, MessageSquare, Zap, Clock, Globe, Shield, Headphones, Code, Video, FileText, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
   Accordion,
   AccordionContent,
@@ -19,8 +17,9 @@ interface PricingPlansProps {
 }
 
 // Helper function to format price
-const formatPrice = (cents: number): string => {
-  return `$${(cents / 100).toFixed(0)}`;
+const formatPrice = (cents: number | null | undefined): string => {
+  if (cents === null || cents === undefined) return "$0";
+  return `$${(cents / 100).toFixed(2)}`;
 };
 
 // Helper function to build feature list from plan
@@ -169,13 +168,17 @@ const faqItems = [
 ];
 
 export function PricingPlans({ plans }: PricingPlansProps) {
-  const [isYearly, setIsYearly] = useState(false);
+  // Sort plans in specific order: Personal > Team > Enterprise
+  const planOrder: Record<string, number> = {
+    personal: 1,
+    team: 2,
+    enterprise: 3,
+  };
 
-  // Sort plans: popular first, then by price
   const sortedPlans = [...plans].sort((a, b) => {
-    if (a.isPopular && !b.isPopular) return -1;
-    if (!a.isPopular && b.isPopular) return 1;
-    return a.priceMonthly - b.priceMonthly;
+    const orderA = planOrder[a.slug.toLowerCase()] ?? 999;
+    const orderB = planOrder[b.slug.toLowerCase()] ?? 999;
+    return orderA - orderB;
   });
 
   // Show empty state if no plans
@@ -199,7 +202,7 @@ export function PricingPlans({ plans }: PricingPlansProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="pt-24 pb-16">
+      <section className="pt-24 pb-8">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
             Pricing
@@ -214,38 +217,18 @@ export function PricingPlans({ plans }: PricingPlansProps) {
       </section>
 
       {/* Pricing Plans */}
-      <section className="pb-20">
+      <section className="pb-12">
         <div className="max-w-5xl mx-auto px-4">
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <Label htmlFor="billing-toggle" className={!isYearly ? "font-semibold" : ""}>
-              Monthly
-            </Label>
-            <Switch
-              id="billing-toggle"
-              checked={isYearly}
-              onCheckedChange={setIsYearly}
-            />
-            <Label htmlFor="billing-toggle" className={isYearly ? "font-semibold" : ""}>
-              Yearly
-            </Label>
-            {isYearly && (
-              <span className="text-sm text-muted-foreground">
-                (Save up to 20%)
-              </span>
-            )}
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-3 max-w-4xl mx-auto items-start">
             {sortedPlans.map((plan) => {
-              const price = isYearly ? plan.priceYearly : plan.priceMonthly;
-              const monthlyPrice = isYearly ? Math.round(plan.priceYearly / 12) : plan.priceMonthly;
+              const price = plan.priceMonthly;
               const features = buildFeaturesList(plan);
+              const hasPrice = price !== null && price !== undefined;
 
               return (
                 <div
                   key={plan.id}
-                  className={`relative rounded-2xl border p-6 bg-white dark:bg-zinc-900 ${
+                  className={`relative rounded-2xl border p-6 bg-white dark:bg-zinc-900 flex flex-col ${
                     plan.isPopular
                       ? "border-foreground ring-1 ring-foreground"
                       : "border-border/50"
@@ -258,26 +241,27 @@ export function PricingPlans({ plans }: PricingPlansProps) {
                       </span>
                     </div>
                   )}
-                  <div className="mb-6">
+                  <div className="mb-4">
                     <h3 className="text-lg font-semibold mb-1">{plan.name}</h3>
                     <p className="text-sm text-muted-foreground">
                       {plan.description || "Perfect for your learning journey"}
                     </p>
                   </div>
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-semibold">{formatPrice(price)}</span>
-                      <span className="text-muted-foreground text-sm">
-                        /{isYearly ? "year" : "month"}
-                      </span>
-                    </div>
-                    {isYearly && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {formatPrice(monthlyPrice)}/month billed annually
-                      </p>
+                  <div className="mb-4">
+                    {hasPrice ? (
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-semibold">{formatPrice(price)}</span>
+                        <span className="text-muted-foreground text-sm">
+                          /month
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-2xl font-semibold text-muted-foreground">
+                        Request for demo
+                      </div>
                     )}
                   </div>
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-2 mb-4">
                     {features.map((feature, index) => (
                       <div
                         key={index}
@@ -288,14 +272,25 @@ export function PricingPlans({ plans }: PricingPlansProps) {
                       </div>
                     ))}
                   </div>
-                  <Link href={`/checkout?plan=${plan.slug}&billing=${isYearly ? "yearly" : "monthly"}`} className="block">
-                    <Button
-                      variant={plan.isPopular ? "default" : "outline"}
-                      className="w-full h-10 rounded-full"
-                    >
-                      {plan.name === "Free" ? "Start for free" : "Get started"}
-                    </Button>
-                  </Link>
+                  {hasPrice ? (
+                    <Link href={`/checkout?plan=${plan.slug}&billing=monthly`} className="block">
+                      <Button
+                        variant={plan.isPopular ? "default" : "outline"}
+                        className="w-full h-10 rounded-full"
+                      >
+                        {plan.name === "Free" ? "Start for free" : "Get started"}
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href="/contact" className="block">
+                      <Button
+                        variant={plan.isPopular ? "default" : "outline"}
+                        className="w-full h-10 rounded-full"
+                      >
+                        Request for demo
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               );
             })}
