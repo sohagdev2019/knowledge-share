@@ -5,14 +5,30 @@
       "downloads": true,
       "team_roles": false,
       "sso": false,
-      "api_access": false
+      "api_access": false,
+      "offline_mode": false,
+      "advanced_analytics": false,
+      "white_label": false,
+      "custom_learning_paths": false,
+      "early_access": false,
+      "premium_courses": false,
+      "export_reports": false
     },
     "limits": {
+      "max_courses": 3,
       "max_instructors": 1,
-      "max_students": 300,
-      "max_courses": 20,
-      "storage_gb": 50,
-      "emails_per_month": 5000
+      "max_students": 1,
+      "max_team_members": 1,
+      "storage_gb": 5,
+      "emails_per_month": 5000,
+      "support_calls_per_month": 0,
+      "max_live_qa_sessions": 0,
+      "priority_support_tickets": 0,
+      "quiz_attempts_per_quiz": 3,
+      "assignment_submissions_per_course": 5,
+      "course_reviews_per_month": 10,
+      "wishlist_items": 50,
+      "enrolled_courses": 3
     }
   },
   "TEAM": {
@@ -20,15 +36,31 @@
       "certificates": true,
       "downloads": true,
       "team_roles": true,
-      "sso": false,
-      "api_access": true
+      "sso": true,
+      "api_access": true,
+      "offline_mode": true,
+      "advanced_analytics": true,
+      "white_label": true,
+      "custom_learning_paths": true,
+      "early_access": true,
+      "premium_courses": true,
+      "export_reports": true
     },
     "limits": {
+      "max_courses": 10,
       "max_instructors": 10,
       "max_students": 5000,
-      "max_courses": 200,
-      "storage_gb": 500,
-      "emails_per_month": 50000
+      "max_team_members": 5,
+      "storage_gb": 100,
+      "emails_per_month": 50000,
+      "support_calls_per_month": 999999,
+      "max_live_qa_sessions": 999999,
+      "priority_support_tickets": 20,
+      "quiz_attempts_per_quiz": 10,
+      "assignment_submissions_per_course": 999999,
+      "course_reviews_per_month": 100,
+      "wishlist_items": 500,
+      "enrolled_courses": 10
     }
   },
   "ENTERPRISE": {
@@ -37,14 +69,34 @@
       "downloads": true,
       "team_roles": true,
       "sso": true,
-      "api_access": true
+      "api_access": true,
+      "offline_mode": true,
+      "advanced_analytics": true,
+      "white_label": true,
+      "custom_learning_paths": true,
+      "early_access": true,
+      "premium_courses": true,
+      "export_reports": true,
+      "on_premise": true,
+      "dedicated_manager": true,
+      "custom_sla": true,
+      "multi_language": true
     },
     "limits": {
+      "max_courses": 999999,
       "max_instructors": 9999,
       "max_students": 999999,
-      "max_courses": 999999,
+      "max_team_members": 999999,
       "storage_gb": 9999,
-      "emails_per_month": 999999
+      "emails_per_month": 999999,
+      "support_calls_per_month": 999999,
+      "max_live_qa_sessions": 999999,
+      "priority_support_tickets": 999999,
+      "quiz_attempts_per_quiz": 999999,
+      "assignment_submissions_per_course": 999999,
+      "course_reviews_per_month": 999999,
+      "wishlist_items": 999999,
+      "enrolled_courses": 999999
     }
   }
 }

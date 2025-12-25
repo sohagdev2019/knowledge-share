@@ -1,6 +1,4 @@
-import { PrismaClient } from "../lib/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/db";
 
 async function main() {
   console.log("Seeding subscription plans...");
@@ -32,11 +30,11 @@ async function main() {
       description: "Perfect for individual learners",
       planType: "Personal",
       priceMonthly: 799, // $7.99 in cents
-      priceYearly: 7990, // $79.90 in cents (save ~$16/year)
+      priceYearly: null, // No yearly plan
       isActive: true,
       isPopular: false,
-      trialDays: 0,
-      maxCourseAccess: 20, // From limits.max_courses
+      trialDays: 7,
+      maxCourseAccess: 3, // From limits.max_courses
       allowsDownloads: true, // From features.downloads
       allowsCertificates: true, // From features.certificates
       allowsLiveClasses: false,
@@ -47,12 +45,11 @@ async function main() {
       allowsCommunitySupport: true,
       features: {
         list: [
-          "Access to 20 courses",
+          "Access to 3 courses",
           "Downloadable resources",
           "Downloadable certificates",
           "Basic progress tracking",
           "Community support",
-          "Mobile app access",
         ],
       },
     },
@@ -62,11 +59,11 @@ async function main() {
       description: "Perfect for individual learners",
       planType: "Personal",
       priceMonthly: 799, // $7.99 in cents
-      priceYearly: 7990, // $79.90 in cents (save ~$16/year)
+      priceYearly: null, // No yearly plan
       isActive: true,
       isPopular: false,
-      trialDays: 0,
-      maxCourseAccess: 20, // From limits.max_courses
+      trialDays: 7,
+      maxCourseAccess: 3, // From limits.max_courses
       allowsDownloads: true, // From features.downloads
       allowsCertificates: true, // From features.certificates
       allowsLiveClasses: false,
@@ -77,12 +74,11 @@ async function main() {
       allowsCommunitySupport: true,
       features: {
         list: [
-          "Access to 20 courses",
+          "Access to 3 courses",
           "Downloadable resources",
           "Downloadable certificates",
           "Basic progress tracking",
           "Community support",
-          "Mobile app access",
         ],
       },
     },
@@ -98,32 +94,31 @@ async function main() {
       description: "Perfect for small teams and growing businesses",
       planType: "Team",
       priceMonthly: 1999, // $19.99 in cents
-      priceYearly: 19990, // $199.90 in cents (save ~$40/year)
+      priceYearly: null, // No yearly plan
       isActive: true,
       isPopular: true,
-      trialDays: 7,
-      maxCourseAccess: 200, // From limits.max_courses
+      trialDays: 14,
+      maxCourseAccess: 10, // From limits.max_courses
       allowsDownloads: true, // From features.downloads
       allowsCertificates: true, // From features.certificates
       allowsLiveClasses: true,
       allowsTeamAccess: true, // From features.team_roles
-      teamSeats: 10, // From limits.max_instructors
+      teamSeats: 5, // From limits.max_team_members
       prioritySupport: true,
       allowsProgressTracking: true,
       allowsCommunitySupport: true,
       features: {
         list: [
-          "Access to 200 courses",
+          "Access to 10 courses",
           "Downloadable resources",
           "Downloadable certificates",
-          "Team access (up to 10 members)",
+          "Team access (up to 5 members)",
           "Team management",
           "API access",
           "Priority support",
           "Live Q&A sessions",
           "Basic progress tracking",
           "Community support",
-          "Mobile app access",
         ],
       },
     },
@@ -133,32 +128,31 @@ async function main() {
       description: "Perfect for small teams and growing businesses",
       planType: "Team",
       priceMonthly: 1999, // $19.99 in cents
-      priceYearly: 19990, // $199.90 in cents (save ~$40/year)
+      priceYearly: null, // No yearly plan
       isActive: true,
       isPopular: true,
-      trialDays: 7,
-      maxCourseAccess: 200, // From limits.max_courses
+      trialDays: 14,
+      maxCourseAccess: 10, // From limits.max_courses
       allowsDownloads: true, // From features.downloads
       allowsCertificates: true, // From features.certificates
       allowsLiveClasses: true,
       allowsTeamAccess: true, // From features.team_roles
-      teamSeats: 10, // From limits.max_instructors
+      teamSeats: 5, // From limits.max_team_members
       prioritySupport: true,
       allowsProgressTracking: true,
       allowsCommunitySupport: true,
       features: {
         list: [
-          "Access to 200 courses",
+          "Access to 10 courses",
           "Downloadable resources",
           "Downloadable certificates",
-          "Team access (up to 10 members)",
+          "Team access (up to 5 members)",
           "Team management",
           "API access",
           "Priority support",
           "Live Q&A sessions",
           "Basic progress tracking",
           "Community support",
-          "Mobile app access",
         ],
       },
     },
@@ -177,13 +171,13 @@ async function main() {
       priceYearly: null,
       isActive: true,
       isPopular: false,
-      trialDays: 14,
+      trialDays: 30,
       maxCourseAccess: null, // Unlimited (999999 in limits)
       allowsDownloads: true, // From features.downloads
       allowsCertificates: true, // From features.certificates
       allowsLiveClasses: true,
       allowsTeamAccess: true, // From features.team_roles
-      teamSeats: 9999, // From limits.max_instructors (unlimited)
+      teamSeats: 999999, // Unlimited team members (large number)
       prioritySupport: true,
       allowsProgressTracking: true,
       allowsCommunitySupport: true,
@@ -213,13 +207,13 @@ async function main() {
       priceYearly: null,
       isActive: true,
       isPopular: false,
-      trialDays: 14,
+      trialDays: 30,
       maxCourseAccess: null, // Unlimited (999999 in limits)
       allowsDownloads: true, // From features.downloads
       allowsCertificates: true, // From features.certificates
       allowsLiveClasses: true,
       allowsTeamAccess: true, // From features.team_roles
-      teamSeats: 9999, // From limits.max_instructors (unlimited)
+      teamSeats: 999999, // Unlimited team members (large number)
       prioritySupport: true,
       allowsProgressTracking: true,
       allowsCommunitySupport: true,
@@ -259,8 +253,5 @@ main()
   .catch((e) => {
     console.error("Error seeding subscription plans:", e);
     process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
   });
 

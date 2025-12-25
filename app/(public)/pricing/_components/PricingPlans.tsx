@@ -58,14 +58,31 @@ const buildFeaturesList = (plan: SubscriptionPlanType): string[] => {
   }
   
   if (plan.allowsTeamAccess) {
-    features.push(`Team access (${plan.teamSeats} seats)`);
+    if (plan.teamSeats === null) {
+      features.push("Unlimited team members");
+    } else {
+      features.push(`Team access (up to ${plan.teamSeats} members)`);
+    }
     features.push("Team management");
   }
   
-  // Always include these
-  features.push("Basic progress tracking");
+  // Progress tracking - Basic for Personal/Team, Advanced for Enterprise
+  if (plan.allowsProgressTracking) {
+    // Check if plan is Enterprise based on planType or unlimited courses
+    if ((plan.planType && plan.planType.toLowerCase() === "enterprise") || plan.maxCourseAccess === null) {
+      features.push("Advanced progress tracking");
+    } else {
+      features.push("Basic progress tracking");
+    }
+  }
+  
+  // Always include community support
   features.push("Community support");
-  features.push("Mobile app access");
+  
+  // Mobile app access - only for Enterprise
+  if (plan.planType && plan.planType.toLowerCase() === "enterprise") {
+    features.push("Mobile app access");
+  }
   
   return features;
 };

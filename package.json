@@ -25,7 +25,8 @@
     "test:cypress:component:open": "cypress open --component",
     "test:all": "npm run test && npm run test:e2e",
     "migrate:reactions": "node scripts/apply-reaction-table.js",
-    "migrate:subscriptions": "node scripts/apply-subscription-tables.js"
+    "migrate:subscriptions": "node scripts/apply-subscription-tables.js",
+    "seed:plans": "npx tsx scripts/seed-subscription-plans.ts"
   },
   "dependencies": {
     "@arcjet/inspect": "1.0.0-beta.8",
