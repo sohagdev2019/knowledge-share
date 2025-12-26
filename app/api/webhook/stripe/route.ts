@@ -181,11 +181,26 @@ export async function POST(req: Request) {
         }
 
         // Create or update user subscription
-        const startDate = new Date(stripeSubscription.current_period_start * 1000);
-        const endDate = new Date(stripeSubscription.current_period_end * 1000);
+        // Validate and create dates safely
+        const now = new Date();
+        const startDate = stripeSubscription.current_period_start
+          ? new Date(stripeSubscription.current_period_start * 1000)
+          : now;
+        const endDate = stripeSubscription.current_period_end
+          ? new Date(stripeSubscription.current_period_end * 1000)
+          : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // Default to 30 days from now
         const nextBillingDate = stripeSubscription.current_period_end
           ? new Date(stripeSubscription.current_period_end * 1000)
           : null;
+
+        // Validate dates are valid
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          console.error("Invalid date values from Stripe subscription", {
+            current_period_start: stripeSubscription.current_period_start,
+            current_period_end: stripeSubscription.current_period_end,
+          });
+          return new Response("Invalid subscription dates", { status: 400 });
+        }
 
         await prisma.$transaction(async (tx) => {
           // Cancel any existing active subscriptions
@@ -256,6 +271,13 @@ export async function POST(req: Request) {
         });
       } catch (error) {
         console.error("Error processing subscription checkout:", error);
+        console.error("Error stack:", error instanceof Error ? error.stack : String(error));
+        console.error("Stripe subscription data:", {
+          id: stripeSubscription?.id,
+          current_period_start: stripeSubscription?.current_period_start,
+          current_period_end: stripeSubscription?.current_period_end,
+          status: stripeSubscription?.status,
+        });
         return new Response("Internal server error", { status: 500 });
       }
 
@@ -456,39 +478,154 @@ export async function POST(req: Request) {
         });
 
         if (subscription) {
-          const statusMap: Record<string, "Active" | "Cancelled" | "PastDue" | "Expired"> = {
+          const statusMap: Record<string, "Active" | "Cancelled" | "PastDue" | "Expired" | "Trial"> = {
             active: "Active",
+            trialing: "Trial",
             canceled: "Cancelled",
             past_due: "PastDue",
             unpaid: "Expired",
           };
 
           const newStatus = statusMap[stripeSubscription.status] || "Active";
-          const endDate = stripeSubscription.current_period_end
-            ? new Date(stripeSubscription.current_period_end * 1000)
-            : null;
-          const nextBillingDate = stripeSubscription.current_period_end
-            ? new Date(stripeSubscription.current_period_end * 1000)
-            : null;
+          
+          // Safely create dates with validation
+          let endDate: Date | null = null;
+          let nextBillingDate: Date | null = null;
+          
+          if (stripeSubscription.current_period_end) {
+            const date = new Date(stripeSubscription.current_period_end * 1000);
+            if (!isNaN(date.getTime())) {
+              endDate = date;
+              nextBillingDate = date;
+            }
+          }
 
           await prisma.userSubscription.update({
             where: { id: subscription.id },
             data: {
               status: newStatus,
-              endDate: endDate,
-              nextBillingDate: nextBillingDate,
+              ...(endDate && { endDate }),
+              ...(nextBillingDate && { nextBillingDate }),
               autoRenew: !stripeSubscription.cancel_at_period_end,
               cancelledAt: stripeSubscription.cancel_at_period_end
                 ? new Date()
                 : subscription.cancelledAt,
             },
           });
+        } else if (event.type === "customer.subscription.created") {
+          // If subscription doesn't exist yet, try to create it from metadata
+          // This can happen if checkout.session.completed failed or hasn't run yet
+          const customerId = typeof stripeSubscription.customer === "string"
+            ? stripeSubscription.customer
+            : stripeSubscription.customer?.id;
+
+          if (customerId) {
+            const user = await prisma.user.findUnique({
+              where: { stripeCustomerId: customerId },
+            });
+
+            if (user) {
+              // Try to find plan from price ID
+              const priceId = stripeSubscription.items.data[0]?.price.id;
+              if (priceId) {
+                const plan = await prisma.subscriptionPlan.findFirst({
+                  where: {
+                    OR: [
+                      { stripePriceIdMonthly: priceId },
+                      { stripePriceIdYearly: priceId },
+                    ],
+                  },
+                });
+
+                if (plan) {
+                  // Validate and create dates safely
+                  const now = new Date();
+                  const startDate = stripeSubscription.current_period_start
+                    ? new Date(stripeSubscription.current_period_start * 1000)
+                    : now;
+                  const endDate = stripeSubscription.current_period_end
+                    ? new Date(stripeSubscription.current_period_end * 1000)
+                    : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // Default to 30 days from now
+                  const nextBillingDate = stripeSubscription.current_period_end
+                    ? new Date(stripeSubscription.current_period_end * 1000)
+                    : null;
+                  const billingCycle = plan.stripePriceIdMonthly === priceId ? "Monthly" : "Yearly";
+
+                  // Validate dates are valid
+                  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || (nextBillingDate && isNaN(nextBillingDate.getTime()))) {
+                    console.error("Invalid date values from Stripe subscription", {
+                      current_period_start: stripeSubscription.current_period_start,
+                      current_period_end: stripeSubscription.current_period_end,
+                    });
+                    return new Response("Invalid subscription dates", { status: 400 });
+                  }
+
+                  await prisma.$transaction(async (tx) => {
+                    // Cancel any existing active subscriptions
+                    await tx.userSubscription.updateMany({
+                      where: {
+                        userId: user.id,
+                        status: {
+                          in: ["Active", "Trial"],
+                        },
+                      },
+                      data: {
+                        status: "Cancelled",
+                        autoRenew: false,
+                        cancelledAt: new Date(),
+                      },
+                    });
+
+                    const newSubscription = await tx.userSubscription.create({
+                      data: {
+                        userId: user.id,
+                        planId: plan.id,
+                        status: stripeSubscription.status === "trialing" ? "Trial" : "Active",
+                        billingCycle: billingCycle,
+                        startDate: startDate,
+                        endDate: endDate,
+                        nextBillingDate: nextBillingDate,
+                        autoRenew: true,
+                        stripeSubscriptionId: stripeSubscription.id,
+                        stripeCustomerId: customerId,
+                      },
+                    });
+
+                    await tx.subscriptionHistory.create({
+                      data: {
+                        userId: user.id,
+                        subscriptionId: newSubscription.id,
+                        action: "Created",
+                        newPlanId: plan.id,
+                      },
+                    });
+                  });
+
+                  console.log("Subscription created from customer.subscription.created event", {
+                    userId: user.id,
+                    planId: plan.id,
+                    stripeSubscriptionId: stripeSubscription.id,
+                  });
+                }
+              }
+            }
+          }
         }
       }
     } catch (error) {
-      console.error("Error processing subscription.updated:", error);
+      console.error("Error processing subscription.created/updated:", error);
+      console.error("Error details:", error instanceof Error ? error.message : String(error));
+      console.error("Error stack:", error instanceof Error ? error.stack : undefined);
+      console.error("Stripe subscription data:", {
+        id: stripeSubscription?.id,
+        current_period_start: stripeSubscription?.current_period_start,
+        current_period_end: stripeSubscription?.current_period_end,
+        status: stripeSubscription?.status,
+      });
       return new Response("Internal server error", { status: 500 });
     }
+
+    return new Response(null, { status: 200 });
   }
 
   // C) customer.subscription.deleted - Mark subscription canceled/expired
@@ -597,49 +734,81 @@ export async function POST(req: Request) {
           });
 
           if (subscription && invoice.amount_paid) {
-            // Update subscription dates
-            const endDate = invoice.period_end
-              ? new Date(invoice.period_end * 1000)
-              : null;
-            const nextBillingDate = invoice.period_end
-              ? new Date(invoice.period_end * 1000)
-              : null;
+            // Update subscription dates with validation
+            let endDate: Date | null = null;
+            let nextBillingDate: Date | null = null;
+            
+            if (invoice.period_end) {
+              const date = new Date(invoice.period_end * 1000);
+              if (!isNaN(date.getTime())) {
+                endDate = date;
+                nextBillingDate = date;
+              }
+            }
 
             await prisma.$transaction(async (tx) => {
               await tx.userSubscription.update({
                 where: { id: subscription.id },
                 data: {
                   status: "Active",
-                  endDate: endDate,
-                  nextBillingDate: nextBillingDate,
+                  ...(endDate && { endDate }),
+                  ...(nextBillingDate && { nextBillingDate }),
                 },
               });
 
-              // Create or update invoice
-              const invoiceNumber = `INV-${Date.now()}-${subscription.id.slice(0, 8)}`;
-              await tx.invoice.create({
-                data: {
-                  invoiceNumber: invoiceNumber,
-                  userId: subscription.userId,
-                  subscriptionId: subscription.id,
-                  planName: subscription.plan.name,
-                  amount: invoice.amount_paid,
-                  totalAmount: invoice.amount_paid,
-                  paymentStatus: "Paid",
-                  paymentDate: new Date(),
-                  stripePaymentIntentId: invoice.payment_intent as string | null,
+              // Check if invoice already exists to avoid duplicates
+              const existingInvoice = await tx.invoice.findUnique({
+                where: {
                   stripeInvoiceId: invoice.id,
                 },
               });
 
-              await tx.subscriptionHistory.create({
-                data: {
-                  userId: subscription.userId,
+              if (!existingInvoice) {
+                // Create invoice
+                const invoiceNumber = `INV-${Date.now()}-${subscription.id.slice(0, 8)}`;
+                await tx.invoice.create({
+                  data: {
+                    invoiceNumber: invoiceNumber,
+                    userId: subscription.userId,
+                    subscriptionId: subscription.id,
+                    planName: subscription.plan?.name || "Subscription",
+                    amount: invoice.amount_paid,
+                    totalAmount: invoice.amount_paid,
+                    paymentStatus: "Paid",
+                    paymentDate: new Date(),
+                    stripePaymentIntentId: invoice.payment_intent as string | null,
+                    stripeInvoiceId: invoice.id,
+                  },
+                });
+              }
+
+              // Only create history if this is a renewal (not initial payment)
+              const existingHistory = await tx.subscriptionHistory.findFirst({
+                where: {
                   subscriptionId: subscription.id,
                   action: "Renewed",
-                  oldPlanId: subscription.planId,
+                  createdAt: {
+                    gte: new Date(Date.now() - 60000), // Within last minute
+                  },
                 },
               });
+
+              if (!existingHistory) {
+                await tx.subscriptionHistory.create({
+                  data: {
+                    userId: subscription.userId,
+                    subscriptionId: subscription.id,
+                    action: "Renewed",
+                    oldPlanId: subscription.planId,
+                  },
+                });
+              }
+            });
+          } else if (!subscription) {
+            // Subscription doesn't exist yet - log but don't fail
+            console.warn("Invoice payment succeeded but subscription not found", {
+              stripeSubscriptionId: stripeSubscriptionId,
+              invoiceId: invoice.id,
             });
           }
         }

@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { Check, X, BookOpen, Users, Award, BarChart3, Download, MessageSquare, Zap, Clock, Globe, Shield, Headphones, Code, Video, FileText, Gamepad2 } from "lucide-react";
+import { Check, X, BookOpen, Users, Award, BarChart3, Download, MessageSquare, Zap, Clock, Globe, Shield, Headphones, Code, Video, FileText, Gamepad2, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -10,10 +10,27 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { SubscriptionPlanType } from "@/app/data/subscription/get-subscription-plans";
+import { UserSubscriptionType } from "@/app/data/subscription/get-user-subscription";
+import { cancelSubscription, upgradeSubscription } from "../actions";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PricingPlansProps {
   plans: SubscriptionPlanType[];
+  currentSubscription: UserSubscriptionType | null;
 }
 
 // Helper function to format price
@@ -184,7 +201,11 @@ const faqItems = [
   },
 ];
 
-export function PricingPlans({ plans }: PricingPlansProps) {
+export function PricingPlans({ plans, currentSubscription }: PricingPlansProps) {
+  const router = useRouter();
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
   // Sort plans in specific order: Personal > Team > Enterprise
   const planOrder: Record<string, number> = {
     personal: 1,
@@ -197,6 +218,67 @@ export function PricingPlans({ plans }: PricingPlansProps) {
     const orderB = planOrder[b.slug.toLowerCase()] ?? 999;
     return orderA - orderB;
   });
+
+  const handleGetStarted = async (plan: SubscriptionPlanType) => {
+    setLoadingPlanId(plan.id);
+    
+    // If user has an active subscription, treat it as an upgrade
+    if (currentSubscription && (currentSubscription.status === "Active" || currentSubscription.status === "Trial")) {
+      if (currentSubscription.planId === plan.id) {
+        // Same plan - redirect to subscription management
+        router.push("/dashboard/subscription");
+        setLoadingPlanId(null);
+        return;
+      } else {
+        // Different plan - trigger upgrade
+        await handleUpgrade(plan.id);
+        return;
+      }
+    }
+    
+    // Add animation delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    router.push(`/checkout?plan=${plan.slug}&billing=monthly`);
+  };
+
+  const handleUpgrade = async (planId: string) => {
+    setLoadingPlanId(planId);
+    try {
+      const result = await upgradeSubscription(planId);
+      if (result.status === "success") {
+        if (result.checkoutUrl) {
+          window.location.href = result.checkoutUrl;
+        } else {
+          toast.success(result.message || "Subscription upgraded successfully");
+          router.refresh();
+        }
+      } else {
+        toast.error(result.message || "Failed to upgrade subscription");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoadingPlanId(null);
+    }
+  };
+
+  const handleCancel = async () => {
+    setIsCancelling(true);
+    try {
+      const result = await cancelSubscription();
+      if (result.status === "success") {
+        toast.success(result.message || "Subscription cancelled successfully");
+        router.refresh();
+      } else {
+        toast.error(result.message || "Failed to cancel subscription");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   // Show empty state if no plans
   if (sortedPlans.length === 0) {
@@ -233,28 +315,97 @@ export function PricingPlans({ plans }: PricingPlansProps) {
         </div>
       </section>
 
+      {/* Current Subscription Banner */}
+      {currentSubscription && (currentSubscription.status === "Active" || currentSubscription.status === "Trial") && (
+        <motion.section
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-5xl mx-auto px-4 mb-8"
+        >
+          <motion.div
+            initial={{ scale: 0.95 }}
+            animate={{ scale: 1 }}
+            className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <div>
+                <p className="font-semibold text-emerald-900 dark:text-emerald-100">
+                  Current Plan: {currentSubscription.plan.name} 
+                  {currentSubscription.status === "Trial" && (
+                    <span className="ml-2 text-xs font-normal bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded">
+                      Trial
+                    </span>
+                  )}
+                </p>
+                <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                  {currentSubscription.nextBillingDate
+                    ? `Next billing: ${new Date(currentSubscription.nextBillingDate).toLocaleDateString()}`
+                    : currentSubscription.status === "Trial"
+                    ? `Trial ends: ${currentSubscription.endDate ? new Date(currentSubscription.endDate).toLocaleDateString() : "N/A"}`
+                    : "Active subscription"}
+                </p>
+              </div>
+            </div>
+            <Link href="/dashboard/subscription">
+              <Button variant="outline" size="sm" className="border-emerald-300 dark:border-emerald-700">
+                Manage Subscription
+              </Button>
+            </Link>
+          </motion.div>
+        </motion.section>
+      )}
+
       {/* Pricing Plans */}
       <section className="pb-12">
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-3 max-w-4xl mx-auto items-start">
-            {sortedPlans.map((plan) => {
+            {sortedPlans.map((plan, index) => {
               const price = plan.priceMonthly;
               const features = buildFeaturesList(plan);
               const hasPrice = price !== null && price !== undefined;
+              const isCurrentPlan = currentSubscription?.planId === plan.id;
+              const isCurrentPlanActive = isCurrentPlan && (currentSubscription?.status === "Active" || currentSubscription?.status === "Trial");
+              const hasAnyActiveSubscription = currentSubscription && (currentSubscription.status === "Active" || currentSubscription.status === "Trial");
+              const isLoading = loadingPlanId === plan.id;
 
               return (
-                <div
+                <motion.div
                   key={plan.id}
-                  className={`relative rounded-2xl border p-6 bg-white dark:bg-zinc-900 flex flex-col ${
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className={`relative rounded-2xl border p-6 bg-white dark:bg-zinc-900 flex flex-col transition-all duration-300 ${
                     plan.isPopular
-                      ? "border-foreground ring-1 ring-foreground"
+                      ? "border-foreground ring-1 ring-foreground shadow-lg"
                       : "border-border/50"
-                  }`}
+                  } ${isCurrentPlanActive ? "ring-2 ring-emerald-500" : ""}`}
                 >
                   {plan.isPopular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="bg-foreground text-background text-xs font-medium px-3 py-1 rounded-full">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="absolute -top-3 left-1/2 -translate-x-1/2"
+                    >
+                      <span className="bg-foreground text-background text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
                         Most Popular
+                      </span>
+                    </motion.div>
+                  )}
+                  {isCurrentPlanActive && (
+                    <div className="absolute -top-3 right-4">
+                      <span className="bg-emerald-500 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        {currentSubscription?.status === "Trial" ? "Current Plan (Trial)" : "Current Plan"}
+                      </span>
+                    </div>
+                  )}
+                  {hasAnyActiveSubscription && !isCurrentPlanActive && (
+                    <div className="absolute -top-3 right-4">
+                      <span className="bg-blue-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+                        Upgrade Available
                       </span>
                     </div>
                   )}
@@ -278,37 +429,143 @@ export function PricingPlans({ plans }: PricingPlansProps) {
                       </div>
                     )}
                   </div>
-                  <div className="space-y-2 mb-4">
-                    {features.map((feature, index) => (
-                      <div
-                        key={index}
+                  <div className="space-y-2 mb-4 flex-grow">
+                    {features.map((feature, featureIndex) => (
+                      <motion.div
+                        key={featureIndex}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 + featureIndex * 0.05 }}
                         className="flex items-center gap-2 text-sm"
                       >
                         <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                         <span>{feature}</span>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
-                  {hasPrice ? (
-                    <Link href={`/checkout?plan=${plan.slug}&billing=monthly`} className="block">
-                      <Button
-                        variant={plan.isPopular ? "default" : "outline"}
-                        className="w-full h-10 rounded-full"
+                  <div className="space-y-2">
+                    {isCurrentPlanActive ? (
+                      <>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              className="w-full h-10 rounded-full"
+                              disabled={isCancelling}
+                            >
+                              {isCancelling ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Cancelling...
+                                </>
+                              ) : (
+                                "Cancel Subscription"
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to cancel your subscription? You'll retain access until the end of your current billing period. You can reactivate anytime.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleCancel}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Cancel Subscription
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        {(() => {
+                          const currentPlanOrder = planOrder[plan.slug.toLowerCase()] ?? 999;
+                          const upgradePlan = sortedPlans.find(p => {
+                            const otherPlanOrder = planOrder[p.slug.toLowerCase()] ?? 999;
+                            return otherPlanOrder > currentPlanOrder && p.priceMonthly !== null;
+                          });
+                          
+                          return upgradePlan ? (
+                            <Button
+                              variant="outline"
+                              className="w-full h-10 rounded-full"
+                              onClick={() => handleUpgrade(upgradePlan.id)}
+                              disabled={isLoading}
+                            >
+                              {isLoading ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Processing...
+                                </>
+                              ) : (
+                                `Upgrade to ${upgradePlan.name}`
+                              )}
+                            </Button>
+                          ) : null;
+                        })()}
+                      </>
+                    ) : hasPrice ? (
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        {plan.name === "Free" ? "Start for free" : "Get started"}
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Link href="/contact" className="block">
-                      <Button
-                        variant={plan.isPopular ? "default" : "outline"}
-                        className="w-full h-10 rounded-full"
-                      >
-                        Request for demo
-                      </Button>
-                    </Link>
-                  )}
-                </div>
+                        <Button
+                          variant={plan.isPopular ? "default" : "outline"}
+                          className="w-full h-10 rounded-full relative overflow-hidden group"
+                          onClick={() => handleGetStarted(plan)}
+                          disabled={isLoading || (hasAnyActiveSubscription && !isCurrentPlanActive)}
+                        >
+                          <AnimatePresence mode="wait">
+                            {isLoading ? (
+                              <motion.div
+                                key="loading"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex items-center justify-center"
+                              >
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Processing...
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                key="text"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex items-center justify-center"
+                              >
+                                {hasAnyActiveSubscription && !isCurrentPlanActive ? (
+                                  <>
+                                    <Sparkles className="mr-2 h-4 w-4" />
+                                    Upgrade to {plan.name}
+                                  </>
+                                ) : (
+                                  <>
+                                    Get Started
+                                    <Sparkles className="ml-2 h-4 w-4 group-hover:animate-pulse" />
+                                  </>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </Button>
+                      </motion.div>
+                    ) : (
+                      <Link href="/contact" className="block">
+                        <Button
+                          variant={plan.isPopular ? "default" : "outline"}
+                          className="w-full h-10 rounded-full"
+                        >
+                          Request for demo
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </motion.div>
               );
             })}
           </div>

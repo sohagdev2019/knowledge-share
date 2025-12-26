@@ -12,6 +12,7 @@ import {
   IconHeart,
   IconStar,
   IconReceipt,
+  IconCreditCard,
 } from "@tabler/icons-react";
 import Logo from "@/public/logo.png";
 
@@ -40,6 +41,11 @@ const navMain = [
     title: "My Profile",
     url: "/dashboard/profile",
     icon: IconUserCircle,
+  },
+  {
+    title: "Subscription",
+    url: "/dashboard/subscription",
+    icon: IconCreditCard,
   },
   {
     title: "Wishlist",

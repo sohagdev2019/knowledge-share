@@ -128,7 +128,7 @@ export function SubscriptionDashboard({ subscription }: SubscriptionDashboardPro
           <div className="border-t pt-4 flex flex-wrap gap-3">
             {!isCancelled && (
               <>
-                <Link href="/dashboard/subscription/change-plan">
+                <Link href="/pricing">
                   <Button variant="outline">
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Change Plan
