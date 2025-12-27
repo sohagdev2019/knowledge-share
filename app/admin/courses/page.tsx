@@ -1,12 +1,11 @@
 import { adminGetCourses } from "@/app/data/admin/admin-get-courses";
-import { buttonVariants } from "@/components/ui/button";
-import Link from "next/link";
 import {
   AdminCourseCard,
   AdminCourseCardSkeleton,
 } from "./_components/AdminCourseCard";
 import { EmptyState } from "@/components/general/EmptyState";
 import { Suspense } from "react";
+import { CreateCourseButton } from "@/components/teacher/CreateCourseButton";
 
 export default function CoursesPage() {
   return (
@@ -14,9 +13,9 @@ export default function CoursesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Your Courses</h1>
 
-        <Link className={buttonVariants()} href="/admin/courses/create">
-          Create Course
-        </Link>
+        <Suspense fallback={<div className="h-10 w-32 bg-muted animate-pulse rounded" />}>
+          <CreateCourseButton />
+        </Suspense>
       </div>
 
       <Suspense fallback={<AdminCourseCardSkeletonLayout />}>

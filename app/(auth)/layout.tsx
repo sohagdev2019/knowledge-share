@@ -1,10 +1,8 @@
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import Image from "next/image";
 
 import Link from "next/link";
 import { ReactNode } from "react";
-import Logo from "@/public/logo.png";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -20,13 +18,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         Back
       </Link>
 
-      <div className="flex w-full max-w-sm flex-col gap-6">
+      <div className="flex w-full max-w-lg flex-col gap-6">
         <Link
           className="flex items-center gap-2 self-center font-medium"
           href="/"
         >
-          <Image src={Logo} alt="Logo" width={32} height={32} />
-          Edupeak
+          <span className="text-xl font-bold text-gray-900 dark:text-white">Edupeak</span>
         </Link>
         {children}
 

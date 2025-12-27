@@ -1,0 +1,117 @@
+{
+  "PERSONAL": {
+    "name": "Personal",
+    "slug": "personal",
+    "description": "Perfect for individual learners",
+    "planType": "Personal",
+    "priceMonthly": 799,
+    "isPopular": false,
+    "isActive": true,
+    "trialDays": 7,
+    "features": {
+      "list": [
+        "Access to 3 courses",
+        "Downloadable resources",
+        "Downloadable certificates",
+        "Basic progress tracking",
+        "Community support"
+      ]
+    },
+    "limits": {
+      "maxCourseAccess": 3,
+      "allowsDownloads": true,
+      "allowsCertificates": true,
+      "allowsLiveClasses": false,
+      "maxLiveQASessions": null,
+      "allowsTeamAccess": false,
+      "teamSeats": 1,
+      "allowsTeamManagement": false,
+      "prioritySupport": false,
+      "maxPrioritySupportTickets": 0,
+      "allowsProgressTracking": true,
+      "allowsCommunitySupport": true,
+      "maxStorageGB": 5,
+      "maxEnrolledCourses": 3
+    }
+  },
+  "TEAM": {
+    "name": "Team",
+    "slug": "team",
+    "description": "Perfect for small teams and growing businesses",
+    "planType": "Team",
+    "priceMonthly": 1999,
+    "isPopular": true,
+    "isActive": true,
+    "trialDays": 14,
+    "features": {
+      "list": [
+        "Access to 10 courses",
+        "Downloadable resources",
+        "Downloadable certificates",
+        "Team access (up to 5 members)",
+        "Team management",
+        "API access",
+        "Priority support",
+        "Live Q&A sessions",
+        "Basic progress tracking",
+        "Community support"
+      ]
+    },
+    "limits": {
+      "maxCourseAccess": 10,
+      "allowsDownloads": true,
+      "allowsCertificates": true,
+      "allowsLiveClasses": true,
+      "maxLiveQASessions": null,
+      "allowsTeamAccess": true,
+      "teamSeats": 5,
+      "allowsTeamManagement": true,
+      "prioritySupport": true,
+      "maxPrioritySupportTickets": 20,
+      "allowsProgressTracking": true,
+      "allowsCommunitySupport": true,
+      "maxEnrolledCourses": 10
+    }
+  },
+  "ENTERPRISE": {
+    "name": "Enterprise",
+    "slug": "enterprise",
+    "description": "For large organizations with advanced needs. Request a demo for custom pricing.",
+    "planType": "Enterprise",
+    "priceMonthly": null,
+    "isPopular": false,
+    "isActive": true,
+    "trialDays": 30,
+    "features": {
+      "list": [
+        "Unlimited course access",
+        "Downloadable resources",
+        "Downloadable certificates",
+        "Unlimited team members",
+        "Team management",
+        "SSO (Single Sign-On)",
+        "API access",
+        "Priority support",
+        "Live Q&A sessions",
+        "Advanced progress tracking",
+        "Community support",
+        "Mobile app access"
+      ]
+    },
+    "limits": {
+      "maxCourseAccess": null,
+      "allowsDownloads": true,
+      "allowsCertificates": true,
+      "allowsLiveClasses": true,
+      "maxLiveQASessions": null,
+      "allowsTeamAccess": true,
+      "teamSeats": null,
+      "allowsTeamManagement": true,
+      "prioritySupport": true,
+      "maxPrioritySupportTickets": null,
+      "allowsProgressTracking": true,
+      "allowsCommunitySupport": true
+    }
+  }
+}
+

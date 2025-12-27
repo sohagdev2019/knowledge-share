@@ -12,9 +12,8 @@ import {
   IconHeart,
   IconStar,
   IconReceipt,
+  IconCreditCard,
 } from "@tabler/icons-react";
-import Logo from "@/public/logo.png";
-
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavSecondary } from "@/components/sidebar/nav-secondary";
 import { NavUser } from "@/components/sidebar/nav-user";
@@ -28,7 +27,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import Image from "next/image";
 
 const navMain = [
   {
@@ -40,6 +38,11 @@ const navMain = [
     title: "My Profile",
     url: "/dashboard/profile",
     icon: IconUserCircle,
+  },
+  {
+    title: "Subscription",
+    url: "/dashboard/subscription",
+    icon: IconCreditCard,
   },
   {
     title: "Wishlist",
@@ -137,8 +140,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link href="/">
-                <Image src={Logo} alt="Logo" className="size-5" />
-                <span className="text-base font-semibold">Edupeak</span>
+                <span className="text-base font-semibold text-gray-900 dark:text-white">Edupeak</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

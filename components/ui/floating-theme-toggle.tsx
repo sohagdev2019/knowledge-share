@@ -3,120 +3,151 @@
 import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export function FloatingThemeToggle() {
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
-  const [isActive, setIsActive] = React.useState(false);
+  const [isAnimating, setIsAnimating] = React.useState(false);
+  const [isHovered, setIsHovered] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleClick = () => {
-    setIsActive(true);
-    setTimeout(() => setIsActive(false), 600);
+  // Determine if we're in dark mode
+  const [isDark, setIsDark] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    };
+    
+    checkDarkMode();
+    
+    // Watch for theme changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    
+    return () => observer.disconnect();
+  }, [theme]);
+
+  const handleToggle = () => {
+    setIsAnimating(true);
+    setTheme(isDark ? "light" : "dark");
+    setTimeout(() => setIsAnimating(false), 600);
   };
 
   if (!mounted) {
-    return null;
+    return (
+      <div className="relative w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+    );
   }
 
   return (
-    <div className="fixed left-4 top-1/2 -translate-y-1/2 z-50">
-      <div className="animate-in fade-in slide-in-from-left-4 duration-700 delay-300">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleClick}
-              className={`group relative rounded-full w-14 h-14 border-2 border-border/50 bg-gradient-to-br from-background via-background to-muted/20 backdrop-blur-xl shadow-2xl hover:shadow-[0_0_30px_rgba(34,209,114,0.3)] transition-all duration-500 hover:scale-110 active:scale-90 hover:border-primary/60 overflow-hidden ${
-                isActive ? "animate-pulse" : ""
-              }`}
-            >
-              {/* Ripple effect on click */}
-              {isActive && (
-                <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-              )}
-              
-              {/* Active flash effect */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent transition-all duration-300 ${
-                  isActive ? "opacity-100 scale-150" : "opacity-0 scale-100"
-                }`}
-              />
-              
-              {/* Animated background gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              
-              {/* Glow effect */}
-              <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
-              
-              {/* Active glow ring */}
-              <div
-                className={`absolute inset-0 rounded-full border-2 border-primary/50 transition-all duration-300 ${
-                  isActive ? "scale-125 opacity-100" : "scale-100 opacity-0"
-                }`}
-              />
-              
-              {/* Icons with modern transitions and active animation */}
-              <div className={`relative z-10 transition-transform duration-300 ${isActive ? "scale-125 rotate-12" : "scale-100 rotate-0"}`}>
-                <Sun className="h-5 w-5 scale-100 rotate-0 transition-all duration-700 dark:scale-0 dark:opacity-0 dark:-rotate-180 text-amber-500 dark:text-transparent" />
-                <Moon className="absolute inset-0 h-5 w-5 scale-0 opacity-0 rotate-180 transition-all duration-700 dark:scale-100 dark:opacity-100 dark:rotate-0 text-slate-300" />
-              </div>
-              
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="start" 
-            side="right" 
-            className="ml-3 animate-in fade-in slide-in-from-left-2 duration-200 backdrop-blur-xl bg-background/95 border-border/50 shadow-xl"
+    <button
+      onClick={handleToggle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group relative w-10 h-10 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-all duration-300 hover:scale-110 active:scale-95"
+      aria-label="Toggle theme"
+    >
+      {/* Subtle outer glow - matches website colors */}
+      <div 
+        className={`absolute inset-0 rounded-full transition-all duration-500 ${
+          isDark 
+            ? "bg-primary/20 shadow-[0_0_15px_rgba(54,211,153,0.3)]" 
+            : "bg-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+        } ${isHovered ? "scale-125 opacity-100" : "scale-100 opacity-0"} ${
+          isAnimating ? "animate-pulse" : ""
+        }`}
+        style={{
+          filter: "blur(6px)",
+        }}
+      />
+
+      {/* Main orb - simplified with website colors */}
+      <div
+        className={`relative w-10 h-10 rounded-full transition-all duration-500 overflow-hidden ${
+          isDark 
+            ? "bg-gradient-to-br from-primary/90 via-primary to-primary/80 border border-primary/30" 
+            : "bg-gradient-to-br from-blue-500/90 via-blue-500 to-purple-500/80 border border-blue-400/30"
+        } ${isHovered ? "shadow-lg" : "shadow-md"} ${
+          isAnimating ? "scale-110" : "scale-100"
+        }`}
+        style={{
+          boxShadow: isDark 
+            ? "0 4px 12px rgba(54, 211, 153, 0.3), inset 0 0 10px rgba(54, 211, 153, 0.2)"
+            : "0 4px 12px rgba(59, 130, 246, 0.3), inset 0 0 10px rgba(147, 51, 234, 0.2)",
+        }}
+      >
+        {/* Subtle inner glow */}
+        <div 
+          className={`absolute inset-0 rounded-full opacity-40 ${
+            isDark 
+              ? "bg-[radial-gradient(circle_at_center,rgba(54,211,153,0.4),transparent_70%)]" 
+              : "bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.5),transparent_70%)]"
+          }`}
+        />
+
+        {/* Icon container - clean and simple */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {/* Sun - Light mode */}
+          <div
+            className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
+              isDark 
+                ? "opacity-0 scale-0 rotate-90" 
+                : "opacity-100 scale-100 rotate-0"
+            }`}
           >
-            <DropdownMenuItem 
-              onClick={() => {
-                setTheme("light");
-                setIsActive(true);
-                setTimeout(() => setIsActive(false), 300);
-              }} 
-              className="cursor-pointer transition-all duration-200 active:scale-95 active:bg-primary/10"
-            >
-              <Sun className="mr-2 h-4 w-4 text-amber-500 transition-transform duration-200 group-hover:rotate-12" />
-              Light
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => {
-                setTheme("dark");
-                setIsActive(true);
-                setTimeout(() => setIsActive(false), 300);
-              }} 
-              className="cursor-pointer transition-all duration-200 active:scale-95 active:bg-primary/10"
-            >
-              <Moon className="mr-2 h-4 w-4 text-slate-300 transition-transform duration-200 group-hover:rotate-12" />
-              Dark
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => {
-                setTheme("system");
-                setIsActive(true);
-                setTimeout(() => setIsActive(false), 300);
-              }} 
-              className="cursor-pointer transition-all duration-200 active:scale-95 active:bg-primary/10"
-            >
-              System
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <Sun 
+              className={`h-5 w-5 text-white transition-all duration-500 ${
+                isAnimating ? "rotate-180" : "rotate-0"
+              }`}
+              style={{
+                filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+              }}
+            />
+          </div>
+
+          {/* Moon - Dark mode */}
+          <div
+            className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
+              isDark 
+                ? "opacity-100 scale-100 rotate-0" 
+                : "opacity-0 scale-0 -rotate-90"
+            }`}
+          >
+            <Moon 
+              className={`h-5 w-5 text-white transition-all duration-500 ${
+                isAnimating ? "-rotate-180" : "rotate-0"
+              }`}
+              style={{
+                filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Shimmer effect on hover */}
+        <div 
+          className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full transition-transform duration-700 ${
+            isHovered ? "translate-x-full" : ""
+          }`}
+        />
       </div>
-    </div>
+
+      {/* Simple expanding ring on click */}
+      {isAnimating && (
+        <div 
+          className={`absolute top-1/2 left-1/2 w-10 h-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 ${
+            isDark ? "border-primary/40" : "border-blue-400/40"
+          } animate-expand-ring`}
+        />
+      )}
+    </button>
   );
 }
 

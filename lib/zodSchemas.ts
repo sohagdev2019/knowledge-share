@@ -56,6 +56,7 @@ export const courseSchema = z.object({
   status: z.enum(courseStatus, {
     message: "Status is required",
   }),
+  availableInSubscription: z.boolean().default(false),
 });
 
 export type CourseSchemaType = z.infer<typeof courseSchema>;

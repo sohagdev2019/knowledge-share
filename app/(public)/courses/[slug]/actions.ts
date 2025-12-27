@@ -179,3 +179,68 @@ export async function enrollInCourseAction(
 
   redirect(checkoutUrl);
 }
+
+export async function toggleWishlistAction(
+  courseId: string
+): Promise<ApiResponse & { isInWishlist?: boolean }> {
+  const user = await requireUser();
+
+  try {
+    const course = await prisma.course.findUnique({
+      where: {
+        id: courseId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!course) {
+      return {
+        status: "error",
+        message: "Course not found",
+      };
+    }
+
+    const existingWishlist = await prisma.wishlist.findUnique({
+      where: {
+        userId_courseId: {
+          userId: user.id,
+          courseId: courseId,
+        },
+      },
+    });
+
+    if (existingWishlist) {
+      await prisma.wishlist.delete({
+        where: {
+          id: existingWishlist.id,
+        },
+      });
+
+      return {
+        status: "success",
+        message: "Removed from wishlist",
+        isInWishlist: false,
+      };
+    } else {
+      await prisma.wishlist.create({
+        data: {
+          userId: user.id,
+          courseId: courseId,
+        },
+      });
+
+      return {
+        status: "success",
+        message: "Added to wishlist",
+        isInWishlist: true,
+      };
+    }
+  } catch (error) {
+    return {
+      status: "error",
+      message: "An unexpected error occurred. Please try again.",
+    };
+  }
+}

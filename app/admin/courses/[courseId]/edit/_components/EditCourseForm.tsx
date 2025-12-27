@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import slugify from "slugify";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -54,13 +56,14 @@ export function EditCourseForm({ data }: iAppProps) {
       title: data.title,
       description: data.description,
       fileKey: data.fileKey,
-      price: data.price,
+      price: data.price / 100, // Convert from cents to dollars
       duration: data.duration,
       level: data.level,
       category: data.category as CourseSchemaType["category"],
       status: data.status,
       slug: data.slug,
       smallDescription: data.smallDescription,
+      availableInSubscription: data.availableInSubscription ?? false,
     },
   });
 
@@ -292,6 +295,29 @@ export function EditCourseForm({ data }: iAppProps) {
               </Select>
 
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="availableInSubscription"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">
+                  Available in Subscription
+                </FormLabel>
+                <FormDescription>
+                  Allow subscribers to access this course as part of their subscription plan
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
             </FormItem>
           )}
         />

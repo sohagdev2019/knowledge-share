@@ -54,12 +54,18 @@ model User {
   teacherApplications   TeacherApplication[]
   activityLogs          ActivityLog[]
   courseRatings         CourseRating[]
+  courseRatingReactions CourseRatingReaction[]
   searchAnalytics       SearchAnalytics[]
   loginHistory          LoginHistory[]
   errorLogs             ErrorLog[]
   watchAnalytics        LessonWatchAnalytics[]
   onlineSessions        OnlineSession[]
   helpRequests          HelpRequest[]
+  wishlist              Wishlist[]
+  subscriptions         UserSubscription[]
+  subscriptionHistory   SubscriptionHistory[]
+  invoices              Invoice[]
+  ownedOrganizations    Organization[]       @relation("OrganizationOwner")
 
   @@map("user")
 }
@@ -131,28 +137,30 @@ model Verification {
 }
 
 model Course {
-  id               String        @id @default(uuid())
-  title            String
-  description      String
-  fileKey          String
-  price            Int
-  duration         Int
-  level            CourseLevel   @default(Beginner)
-  stripePriceId    String        @unique
-  category         String
-  smallDescription String
-  slug             String        @unique
-  status           CourseStatus  @default(Draft)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  userId           String
-  chapter          Chapter[]
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollment       Enrollment[]
-  supportCalls     SupportCall[]
-  blogs             Blog[]
-  announcements     Announcement[]
-  ratings           CourseRating[]
+  id                   String        @id @default(uuid())
+  title                String
+  description          String
+  fileKey              String
+  price                Int
+  duration             Int
+  level                CourseLevel   @default(Beginner)
+  stripePriceId        String        @unique
+  category             String
+  smallDescription     String
+  slug                 String        @unique
+  status               CourseStatus  @default(Draft)
+  availableInSubscription Boolean    @default(false)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  userId               String
+  chapter              Chapter[]
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment           Enrollment[]
+  supportCalls         SupportCall[]
+  blogs                Blog[]
+  announcements        Announcement[]
+  ratings              CourseRating[]
+  wishlist             Wishlist[]
 }
 
 model Chapter {
@@ -602,6 +610,7 @@ enum BlogStatus {
 
 enum ReactionType {
   Like
+  Dislike
   Love
   Insightful
   Funny
@@ -629,6 +638,20 @@ model Workspace {
   invitations Invitation[]
 
   @@map("workspace")
+}
+
+// Organization model for subscription-based LMS
+model Organization {
+  id          String        @id @default(uuid())
+  name        String
+  ownerUserId String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  owner       User          @relation("OrganizationOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  subscription Subscription?
+
+  @@index([ownerUserId])
+  @@map("organization")
 }
 
 model Membership {
@@ -824,21 +847,38 @@ enum PaymentTransactionStatus {
 
 // Course Ratings
 model CourseRating {
-  id          String   @id @default(uuid())
+  id          String                 @id @default(uuid())
   courseId    String
   userId      String
-  rating      Int      // 1-5
+  rating      Int                    // 1-5
   comment     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  reactions   CourseRatingReaction[]
 
   @@unique([userId, courseId])
   @@index([courseId])
   @@index([rating])
   @@index([createdAt])
   @@map("course_rating")
+}
+
+model CourseRatingReaction {
+  id          String       @id @default(uuid())
+  ratingId    String
+  userId      String
+  reaction    ReactionType // Like or Dislike
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  rating      CourseRating @relation(fields: [ratingId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([ratingId, userId])
+  @@index([ratingId])
+  @@index([userId])
+  @@map("course_rating_reaction")
 }
 
 // Search Analytics
@@ -985,4 +1025,238 @@ enum HelpRequestUserType {
   Teacher
   Student
   Admin
+}
+
+// Subscription System Models
+model SubscriptionPlan {
+  id                    String            @id @default(uuid())
+  name                  String
+  slug                  String            @unique
+  description           String?
+  planType              String            @default("Personal") // Personal, Team, Enterprise
+  priceMonthly          Int?              // in cents, null for Enterprise or plans without monthly
+  priceYearly           Int?              // in cents, null for Enterprise or plans without yearly
+  stripePriceIdMonthly  String?           @unique
+  stripePriceIdYearly   String?           @unique
+  features              Json?             // JSON object for flexible feature storage
+  isActive              Boolean           @default(true)
+  isPopular             Boolean           @default(false)
+  trialDays             Int               @default(0)
+  maxCourseAccess       Int?              // null = unlimited
+  allowsDownloads       Boolean           @default(false)
+  allowsCertificates     Boolean           @default(false)
+  allowsLiveClasses      Boolean           @default(false)
+  maxLiveQASessions     Int?              // null = unlimited, number of Q&A sessions allowed
+  allowsTeamAccess       Boolean           @default(false)
+  teamSeats              Int               @default(1)
+  allowsTeamManagement   Boolean           @default(false)
+  prioritySupport        Boolean           @default(false)
+  maxPrioritySupportTickets Int?          // null = unlimited, priority support ticket limit
+  allowsProgressTracking Boolean          @default(false)
+  allowsCommunitySupport Boolean          @default(false)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  subscriptions         UserSubscription[]
+  oldPlanHistory        SubscriptionHistory[] @relation("OldPlanHistory")
+  newPlanHistory        SubscriptionHistory[] @relation("NewPlanHistory")
+
+  @@index([isActive])
+  @@index([slug])
+  @@map("subscription_plan")
+}
+
+model UserSubscription {
+  id                  String                @id @default(uuid())
+  userId              String
+  planId              String
+  status              SubscriptionStatus    @default(Active)
+  billingCycle        BillingCycle
+  startDate           DateTime
+  endDate             DateTime?
+  nextBillingDate     DateTime?
+  autoRenew           Boolean               @default(true)
+  cancelledAt         DateTime?
+  stripeSubscriptionId String?              @unique
+  stripeCustomerId    String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                SubscriptionPlan      @relation(fields: [planId], references: [id], onDelete: Restrict)
+  invoices            Invoice[]
+  history             SubscriptionHistory[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([planId])
+  @@index([stripeSubscriptionId])
+  @@map("user_subscription")
+}
+
+model Invoice {
+  id                    String            @id @default(uuid())
+  invoiceNumber         String            @unique
+  userId                String
+  subscriptionId        String?
+  planName              String
+  amount                Int               // in cents
+  currency              String            @default("usd")
+  vatAmount             Int               @default(0)
+  discountAmount        Int               @default(0)
+  totalAmount           Int
+  paymentStatus         PaymentStatus     @default(Pending)
+  paymentDate           DateTime?
+  paymentMethod         String?
+  stripePaymentIntentId String?           @unique
+  stripeInvoiceId       String?           @unique
+  pdfUrl                String?
+  metadata              Json?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription          UserSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([paymentStatus])
+  @@index([invoiceNumber])
+  @@index([createdAt])
+  @@map("invoice")
+}
+
+model Coupon {
+  id                  String    @id @default(uuid())
+  code                String    @unique
+  description         String?
+  discountType        DiscountType
+  discountValue       Int       // percentage (0-100) or fixed amount in cents
+  planIds             String[]  // array of plan IDs this coupon applies to
+  appliesToAllPlans   Boolean   @default(false)
+  maxUses             Int?      // null = unlimited
+  usedCount           Int       @default(0)
+  validFrom           DateTime
+  validUntil          DateTime?
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+  @@index([validFrom, validUntil])
+  @@map("coupon")
+}
+
+model SubscriptionHistory {
+  id              String              @id @default(uuid())
+  userId          String
+  subscriptionId  String
+  action          SubscriptionAction
+  oldPlanId       String?
+  newPlanId       String?
+  metadata        Json?
+  createdAt       DateTime            @default(now())
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription    UserSubscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  oldPlan         SubscriptionPlan?   @relation("OldPlanHistory", fields: [oldPlanId], references: [id], onDelete: SetNull)
+  newPlan         SubscriptionPlan?   @relation("NewPlanHistory", fields: [newPlanId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("subscription_history")
+}
+
+enum SubscriptionStatus {
+  Active
+  Trial
+  Expired
+  Cancelled
+  PastDue
+  Trialing
+  Incomplete
+  Paused
+}
+
+enum BillingCycle {
+  Monthly
+  Yearly
+}
+
+enum PaymentStatus {
+  Pending
+  Paid
+  Failed
+  Refunded
+}
+
+enum DiscountType {
+  Percentage
+  FixedAmount
+}
+
+enum SubscriptionAction {
+  Created
+  Upgraded
+  Downgraded
+  Cancelled
+  Renewed
+  Expired
+  Reactivated
+}
+
+// Wishlist Model
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@map("wishlist")
+}
+
+// Organization-based Subscription model (webhook-only approach)
+model Subscription {
+  id                    String              @id @default(uuid())
+  orgId                 String               @unique
+  planCode              String               // PERSONAL, TEAM, or ENTERPRISE
+  status                SubscriptionStatus   @default(Incomplete)
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean             @default(false)
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?             @unique
+  stripePriceId         String?             // Optional but helpful for mapping
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  organization          Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  usageCounters         UsageCounter[]
+
+  @@index([orgId])
+  @@index([status])
+  @@index([stripeSubscriptionId])
+  @@index([stripeCustomerId])
+  @@map("subscription")
+}
+
+// Usage counter for tracking quotas (optional but professional)
+model UsageCounter {
+  id           String       @id @default(uuid())
+  orgId        String
+  key          String       // e.g., "students", "courses", "emails_sent"
+  periodStart  DateTime
+  periodEnd    DateTime
+  count        Int          @default(0)
+  subscription Subscription @relation(fields: [orgId], references: [orgId], onDelete: Cascade)
+
+  @@unique([orgId, key, periodStart])
+  @@index([orgId])
+  @@index([key])
+  @@index([periodStart, periodEnd])
+  @@map("usage_counter")
 }

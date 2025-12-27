@@ -45,13 +45,14 @@ export async function editCourse(
         title: result.data.title,
         description: result.data.description,
         fileKey: result.data.fileKey,
-        price: result.data.price,
+        price: Math.round(result.data.price * 100), // Convert to cents
         duration: result.data.duration,
         level: result.data.level,
         status: result.data.status,
         smallDescription: result.data.smallDescription,
         category: result.data.category,
         slug: result.data.slug,
+        availableInSubscription: result.data.availableInSubscription,
       },
     });
 

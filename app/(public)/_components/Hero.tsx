@@ -48,12 +48,12 @@ export default function Hero() {
   return (
     <section
       ref={ref}
-      className="relative py-16 md:py-24 overflow-hidden  text-white"
+      className="relative py-16 md:py-24 overflow-hidden  text-gray-900 dark:text-white"
     >
       {/* Animated background gradient */}
-      <div className="absolute inset-0 opacity-30">
+      <div className="absolute inset-0 opacity-20 dark:opacity-30">
         <div
-          className={`absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl transition-all duration-2000 ${
+          className={`absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 dark:bg-blue-500/20 rounded-full blur-3xl transition-all duration-2000 ${
             isVisible ? "opacity-100 scale-100" : "opacity-0 scale-50"
           }`}
           style={{
@@ -62,7 +62,7 @@ export default function Hero() {
           }}
         />
         <div
-          className={`absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl transition-all duration-2000 ${
+          className={`absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-3xl transition-all duration-2000 ${
             isVisible ? "opacity-100 scale-100" : "opacity-0 scale-50"
           }`}
           style={{
@@ -118,7 +118,7 @@ export default function Hero() {
         <div className="flex flex-col items-center text-center space-y-4 md:space-y-6 max-w-4xl mx-auto">
           {/* Top alternative text with smooth fade and scale animation */}
           <p
-            className={`text-sm md:text-base text-gray-400 dark:text-gray-400 mb-4 transition-all duration-1200 ${
+            className={`text-sm md:text-base text-gray-600 dark:text-gray-400 mb-4 transition-all duration-1200 ${
               isVisible
                 ? "opacity-100 translate-y-0 scale-100"
                 : "opacity-0 translate-y-6 scale-95"
@@ -132,7 +132,7 @@ export default function Hero() {
             <span className="inline-flex items-center">
               <span className="inline-block w-[180px] text-left">
                 <span
-                  className={`inline-block text-gray-300 dark:text-gray-300 font-medium transition-all duration-200 ${
+                  className={`inline-block text-gray-700 dark:text-gray-300 font-medium transition-all duration-200 ${
                     isTraditionalAnimating
                       ? "opacity-0 translate-y-2"
                       : "opacity-100 translate-y-0"
@@ -145,7 +145,7 @@ export default function Hero() {
           </p>
 
           {/* Main headline - two lines */}
-          <h1 className="text-5xl md:text-6xl lg:text-6xl font-bold tracking-tight leading-tight mb-6 md:mb-8">
+          <h1 className="text-5xl md:text-6xl lg:text-6xl font-bold tracking-tight leading-tight mb-6 md:mb-8 text-gray-900 dark:text-white">
             <span className="block">
               Learn at your pace
             </span>
@@ -157,7 +157,7 @@ export default function Hero() {
           {/* Description text with smooth fade animation */}
           <div className="space-y-3 max-w-2xl mt-4 text-center">
             <p
-              className={`text-[16px] md:text-[18px] text-gray-300 dark:text-gray-300 transition-all duration-1200 leading-relaxed ${
+              className={`text-[16px] md:text-[18px] text-gray-700 dark:text-gray-300 transition-all duration-1200 leading-relaxed ${
                 isVisible
                   ? "opacity-100 translate-y-0 blur-0"
                   : "opacity-0 translate-y-6 blur-sm"
@@ -170,7 +170,7 @@ export default function Hero() {
               Access thousands of courses taught by industry experts.
             </p>
             <p
-              className={`text-[16px] md:text-[18px] text-gray-300 dark:text-gray-300 transition-all duration-1200 leading-relaxed ${
+              className={`text-[16px] md:text-[18px] text-gray-700 dark:text-gray-300 transition-all duration-1200 leading-relaxed ${
                 isVisible
                   ? "opacity-100 translate-y-0 blur-0"
                   : "opacity-0 translate-y-6 blur-sm"
@@ -199,10 +199,10 @@ export default function Hero() {
           >
             <Link
               href="/courses"
-              className="group relative px-5 py-2.5 font-semibold text-sm text-black dark:text-black bg-white hover:bg-gray-100 dark:hover:bg-gray-100 transition-all duration-300 rounded-lg transform hover:scale-105 active:scale-95 hover:shadow-xl hover:shadow-white/30 overflow-hidden animate-pulse-on-hover"
+              className="group relative px-5 py-2.5 font-semibold text-sm text-white bg-gray-900 dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-100 transition-all duration-300 rounded-lg transform hover:scale-105 active:scale-95 hover:shadow-xl hover:shadow-gray-900/30 dark:hover:shadow-white/30 overflow-hidden animate-pulse-on-hover"
               style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" }}
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               <span className="relative z-10 flex items-center justify-center gap-2">
                 Start learning free
                 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
@@ -211,10 +211,10 @@ export default function Hero() {
 
             <Link
               href="/courses"
-              className="group relative px-5 py-2.5 font-semibold text-sm text-white dark:text-white border-2 border-white dark:border-white hover:bg-white/20 dark:hover:bg-white/20 transition-all duration-300 rounded-lg transform hover:scale-105 active:scale-95 hover:shadow-xl hover:shadow-white/20 hover:border-white/80 overflow-hidden backdrop-blur-sm animate-pulse-on-hover"
+              className="group relative px-5 py-2.5 font-semibold text-sm text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white hover:bg-gray-100 dark:hover:bg-white/20 transition-all duration-300 rounded-lg transform hover:scale-105 active:scale-95 hover:shadow-xl hover:shadow-gray-900/20 dark:hover:shadow-white/20 hover:border-gray-800 dark:hover:border-white/80 overflow-hidden backdrop-blur-sm animate-pulse-on-hover"
               style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" }}
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-900/10 dark:via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               <span className="relative z-10 flex items-center justify-center gap-2">
                 Explore courses
                 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>

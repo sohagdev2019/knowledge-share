@@ -51,20 +51,49 @@ try {
   );
 }
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn", "query"] : ["error"],
-    datasources: {
-      db: {
-        url: optimizedDatabaseUrl,
+// In development, check if the cached Prisma client has all required models
+// If not, clear the cache and create a new instance
+let prismaInstance: PrismaClient;
+if (process.env.NODE_ENV === "development" && globalForPrisma.prisma) {
+  // Check if the cached instance has the subscriptionPlan model (newest model)
+  // This ensures we regenerate if new models were added
+  if (!('subscriptionPlan' in globalForPrisma.prisma)) {
+    // Clear the old cached instance and disconnect it
+    if (globalForPrisma.prisma) {
+      globalForPrisma.prisma.$disconnect().catch(() => {});
+    }
+    delete (globalForPrisma as any).prisma;
+    // Create a new instance
+    prismaInstance = new PrismaClient({
+      log: ["error", "warn", "query"],
+      datasources: {
+        db: {
+          url: optimizedDatabaseUrl,
+        },
       },
-    },
-    // Note: Connection pool settings are configured via connection string parameters
-    // (connect_timeout, pool_timeout) which are added in getOptimizedDatabaseUrl()
-  });
+    });
+    globalForPrisma.prisma = prismaInstance;
+  } else {
+    prismaInstance = globalForPrisma.prisma;
+  }
+} else {
+  prismaInstance =
+    globalForPrisma.prisma ||
+    new PrismaClient({
+      log: process.env.NODE_ENV === "development" ? ["error", "warn", "query"] : ["error"],
+      datasources: {
+        db: {
+          url: optimizedDatabaseUrl,
+        },
+      },
+      // Note: Connection pool settings are configured via connection string parameters
+      // (connect_timeout, pool_timeout) which are added in getOptimizedDatabaseUrl()
+    });
+  
+  if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prismaInstance;
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export const prisma = prismaInstance;
 
 // Handle connection cleanup on process termination
 // Only register in Node.js runtime (not available in Edge runtime)

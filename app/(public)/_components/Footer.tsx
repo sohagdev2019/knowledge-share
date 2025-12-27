@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import Logo from "@/public/logo.png";
 
 export default function Footer() {
   const { setTheme, theme } = useTheme();
@@ -23,15 +21,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row md:justify-between gap-10 mb-10">
           <div className="md:max-w-60">
             <Link href="/" className="block mb-4">
-              <Image
-                alt="Edupeak"
-                loading="lazy"
-                width={120}
-                height={28}
-                className="h-6 w-auto dark:invert"
-                src={Logo}
-                style={{ color: "transparent" }}
-              />
+              <span className="text-xl font-bold text-gray-900 dark:text-white">Edupeak</span>
             </Link>
             <p className="text-xs text-muted-foreground mb-4">
               Built for learners, Edupeak gives you reliable, affordable

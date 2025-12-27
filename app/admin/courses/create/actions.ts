@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/app/data/admin/require-admin";
+import { canCreateCourse } from "@/lib/teacher-plan-limits";
 import arcjet, { fixedWindow } from "@/lib/arcjet";
 
 import { prisma } from "@/lib/db";
@@ -50,6 +51,15 @@ export async function CreateCourse(
       return {
         status: "error",
         message: `Invalid Form Data: ${validation.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ")}`,
+      };
+    }
+
+    // Check course limit for teacher plans
+    const courseLimitCheck = await canCreateCourse();
+    if (!courseLimitCheck.allowed) {
+      return {
+        status: "error",
+        message: courseLimitCheck.reason || "Course limit reached. Please upgrade your plan.",
       };
     }
 
@@ -103,6 +113,7 @@ export async function CreateCourse(
         smallDescription: validation.data.smallDescription,
         slug: validation.data.slug,
         status: validation.data.status,
+        availableInSubscription: validation.data.availableInSubscription,
         userId: session.user.id,
         stripePriceId: typeof stripeProduct.default_price === "string" 
           ? stripeProduct.default_price 

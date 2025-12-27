@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StudentType } from "@/app/data/student/get-all-students";
+import { useRouter } from "next/navigation";
 import { 
   BookOpen, 
   CheckCircle2, 
@@ -58,8 +59,13 @@ export function StudentsGridSection({ students }: StudentsGridSectionProps) {
 }
 
 function StudentCard({ student }: { student: StudentType }) {
+  const router = useRouter();
   const fullName = `${student.firstName} ${student.lastName || ""}`.trim();
   const initials = `${student.firstName[0]}${student.lastName?.[0] || ""}`.toUpperCase();
+  
+  const handleViewProfile = () => {
+    router.push(`/students-gallery/${student.id}`);
+  };
   
   return (
     <Card className="border border-border bg-card hover:shadow-lg transition-shadow duration-300">
@@ -154,11 +160,8 @@ function StudentCard({ student }: { student: StudentType }) {
         <div className="pt-4 mt-auto">
           <Button 
             variant="outline" 
-            className="w-full"
-            onClick={() => {
-              // You can add navigation to student profile page here
-              console.log("View profile for:", student.id);
-            }}
+            className="w-full cursor-pointer"
+            onClick={handleViewProfile}
           >
             View Profile
           </Button>

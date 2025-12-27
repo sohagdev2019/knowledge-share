@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
       email: string;
       password: string;
       otp: string;
+      role?: string;
     };
 
     try {
@@ -116,13 +117,14 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(registrationData.password, 10);
 
-    // Create user with user role (student)
+    // Create user with appropriate role (student or teacher)
     const userId = uuidv4();
     const normalizedFirstName = registrationData.firstName.trim();
     const normalizedLastName = registrationData.lastName.trim();
+    const userRole = registrationData.role === "teacher" ? "teacher" : "user"; // Use role from registration data
 
     await prisma.$transaction(async (tx) => {
-      // Create user with user role (not admin)
+      // Create user with appropriate role
       await tx.user.create({
         data: {
           id: userId,
@@ -133,7 +135,7 @@ export async function POST(req: NextRequest) {
           emailVerified: true, // Auto-verified via OTP
           createdAt: new Date(),
           updatedAt: new Date(),
-          role: "user", // Student role
+          role: userRole,
         },
       });
 
@@ -156,9 +158,10 @@ export async function POST(req: NextRequest) {
       });
     });
 
+    const accountType = userRole === "teacher" ? "Teacher" : "Student";
     return NextResponse.json({
       status: "success",
-      message: "Student account created successfully! You can now login.",
+      message: `${accountType} account created successfully! You can now login.`,
     });
   } catch (error) {
     console.error("Verify OTP error:", error);

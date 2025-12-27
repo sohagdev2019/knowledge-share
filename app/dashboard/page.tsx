@@ -5,9 +5,11 @@ import { requireUser } from "../data/user/require-user";
 import { PublicCourseCard } from "../(public)/_components/PublicCourseCard";
 import { prisma } from "@/lib/db";
 import { getActiveSupportCallsByCourse } from "../data/course/support-calls";
+import { getUserSubscription } from "../data/subscription/get-user-subscription";
 
 import { CourseProgressCard } from "./_components/CourseProgressCard";
 import { DashboardStats } from "./_components/DashboardStats";
+import { SubscriptionStatusCard } from "./_components/SubscriptionStatusCard";
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -18,10 +20,12 @@ export default async function DashboardPage() {
 
   const userRole = dbUser?.role || "user";
 
-  const [courses, enrolledCourses] = await Promise.all([
+  const [courses, enrolledCourses, subscriptionData] = await Promise.all([
     getAllCourses(),
     getEnrolledCourses(),
+    getUserSubscription(),
   ]);
+  const subscription = subscriptionData.subscription;
 
   // Calculate stats
   const enrolledCount = enrolledCourses.length;
@@ -59,6 +63,9 @@ export default async function DashboardPage() {
           totalCourses={totalCoursesCount}
           userRole={userRole}
         />
+
+        {/* Subscription Status Card */}
+        <SubscriptionStatusCard subscription={subscription} />
 
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">Enrolled Courses</h1>

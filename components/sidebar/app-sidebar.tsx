@@ -34,9 +34,8 @@ import {
   IconAlertTriangle,
   IconDatabase,
   IconInbox,
+  IconCreditCard,
 } from "@tabler/icons-react";
-import Logo from "@/public/logo.png";
-
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavSecondary } from "@/components/sidebar/nav-secondary";
 import { NavUser } from "@/components/sidebar/nav-user";
@@ -50,7 +49,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 
 const allNavMainItems = [
@@ -104,6 +102,12 @@ const allNavMainItems = [
     title: "Order History",
     url: "/admin/order-history",
     icon: IconReceipt,
+    adminOnly: true, // Only visible to admin, not superadmin
+  },
+  {
+    title: "Subscription",
+    url: "/admin/subscription",
+    icon: IconCreditCard,
     adminOnly: true, // Only visible to admin, not superadmin
   },
   {
@@ -320,8 +324,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <Link href="/">
-                <Image src={Logo} alt="Logo" className="size-5" />
-                <span className="text-base font-semibold">Edupeak</span>
+                <span className="text-base font-semibold text-gray-900 dark:text-white">Edupeak</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

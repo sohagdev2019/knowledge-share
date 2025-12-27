@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { S3 } from "@/lib/S3Client";
 import arcjet, { fixedWindow } from "@/lib/arcjet";
 import { requireAdmin } from "@/app/data/admin/require-admin";
+import { canUploadFile } from "@/lib/teacher-plan-limits";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -71,6 +72,16 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: `File size exceeds limit (max: ${isImage ? "5MB" : "5GB"})` },
         { status: 400 }
+      );
+    }
+
+    // Check teacher plan storage limit
+    const fileSizeMB = file.size / (1024 * 1024);
+    const storageCheck = await canUploadFile(fileSizeMB);
+    if (!storageCheck.allowed) {
+      return NextResponse.json(
+        { error: storageCheck.reason || "Storage limit reached. Please upgrade your plan." },
+        { status: 403 }
       );
     }
 

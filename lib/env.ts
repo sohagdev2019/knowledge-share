@@ -26,6 +26,8 @@ export const env = createEnv({
     NEXTAUTH_URL: urlOrEmpty.optional(),
     AUTH_GITHUB_CLIENT_ID: z.string().optional(),
     AUTH_GITHUB_SECRET: z.string().optional(),
+    AUTH_GOOGLE_CLIENT_ID: z.string().optional(),
+    AUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
     BREVO_API_KEY: z.string().optional(),
     BREVO_SENDER_EMAIL: emailOrEmpty.optional(), // Required: Must be a verified sender email in Brevo
     BREVO_SENDER_NAME: z.string().optional(),
@@ -37,6 +39,13 @@ export const env = createEnv({
     AWS_REGION: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    // Stripe Price IDs for subscription plans (webhook-only approach)
+    STRIPE_PRICE_PERSONAL_MONTHLY: z.string().optional(),
+    STRIPE_PRICE_PERSONAL_YEARLY: z.string().optional(),
+    STRIPE_PRICE_TEAM_MONTHLY: z.string().optional(),
+    STRIPE_PRICE_TEAM_YEARLY: z.string().optional(),
+    STRIPE_PRICE_ENTERPRISE_MONTHLY: z.string().optional(),
+    STRIPE_PRICE_ENTERPRISE_YEARLY: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
   },
 

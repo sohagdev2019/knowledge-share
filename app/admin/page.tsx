@@ -10,12 +10,24 @@ import {
   AdminCourseCardSkeleton,
 } from "./courses/_components/AdminCourseCard";
 import { Suspense } from "react";
+import { UsageIndicatorServer } from "@/components/teacher/UsageIndicatorServer";
+import { SubscriptionDetailsServer } from "@/components/teacher/SubscriptionDetailsServer";
 
 export default async function AdminIndexPage() {
   const enrollmentData = await adminGetEnrollmentStats();
   return (
     <>
       <SectionCards />
+
+      {/* Teacher Plan Usage Indicator */}
+      <Suspense fallback={null}>
+        <UsageIndicatorServer />
+      </Suspense>
+
+      {/* Subscription Details & Invoices */}
+      <Suspense fallback={<div className="h-64 bg-muted animate-pulse rounded-lg" />}>
+        <SubscriptionDetailsServer />
+      </Suspense>
 
       <ChartAreaInteractive data={enrollmentData} />
 

@@ -1,0 +1,111 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+
+/**
+ * Temporary endpoint to apply the course_rating_reaction table migration
+ * 
+ * ⚠️ DELETE THIS FILE AFTER RUNNING ONCE!
+ * 
+ * Access: POST /api/admin/apply-reaction-migration
+ */
+export async function POST() {
+  try {
+    console.log("🔄 Applying course_rating_reaction table migration...");
+
+    // Add 'Dislike' to ReactionType enum if it doesn't exist
+    console.log("📝 Adding 'Dislike' to ReactionType enum...");
+    await prisma.$executeRaw`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_enum 
+          WHERE enumlabel = 'Dislike' 
+          AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'ReactionType')
+        ) THEN
+          ALTER TYPE "ReactionType" ADD VALUE 'Dislike';
+        END IF;
+      EXCEPTION
+        WHEN duplicate_object THEN null;
+      END $$;
+    `;
+    console.log("✅ ReactionType enum updated");
+
+    // Create table
+    console.log("📝 Creating course_rating_reaction table...");
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "course_rating_reaction" (
+        "id" TEXT NOT NULL,
+        "ratingId" TEXT NOT NULL,
+        "userId" TEXT NOT NULL,
+        "reaction" "ReactionType" NOT NULL,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "course_rating_reaction_pkey" PRIMARY KEY ("id")
+      );
+    `;
+    console.log("✅ Table created");
+
+    // Create indexes
+    console.log("📝 Creating indexes...");
+    await prisma.$executeRaw`
+      CREATE UNIQUE INDEX IF NOT EXISTS "course_rating_reaction_ratingId_userId_key" 
+        ON "course_rating_reaction"("ratingId", "userId");
+    `;
+    await prisma.$executeRaw`
+      CREATE INDEX IF NOT EXISTS "course_rating_reaction_ratingId_idx" 
+        ON "course_rating_reaction"("ratingId");
+    `;
+    await prisma.$executeRaw`
+      CREATE INDEX IF NOT EXISTS "course_rating_reaction_userId_idx" 
+        ON "course_rating_reaction"("userId");
+    `;
+    console.log("✅ Indexes created");
+
+    // Add foreign keys
+    console.log("📝 Adding foreign keys...");
+    await prisma.$executeRaw`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint 
+          WHERE conname = 'course_rating_reaction_ratingId_fkey'
+        ) THEN
+          ALTER TABLE "course_rating_reaction" 
+          ADD CONSTRAINT "course_rating_reaction_ratingId_fkey" 
+          FOREIGN KEY ("ratingId") REFERENCES "course_rating"("id") 
+          ON DELETE CASCADE ON UPDATE CASCADE;
+        END IF;
+      END $$;
+    `;
+    await prisma.$executeRaw`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint 
+          WHERE conname = 'course_rating_reaction_userId_fkey'
+        ) THEN
+          ALTER TABLE "course_rating_reaction" 
+          ADD CONSTRAINT "course_rating_reaction_userId_fkey" 
+          FOREIGN KEY ("userId") REFERENCES "user"("id") 
+          ON DELETE CASCADE ON UPDATE CASCADE;
+        END IF;
+      END $$;
+    `;
+    console.log("✅ Foreign keys added");
+
+    return NextResponse.json({
+      success: true,
+      message: "Migration applied successfully! The course_rating_reaction table is now ready.",
+    });
+  } catch (error) {
+    console.error("❌ Error applying migration:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
+}
+
