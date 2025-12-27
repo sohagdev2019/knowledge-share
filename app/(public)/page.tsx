@@ -8,7 +8,7 @@ import PricingSection from "./_components/PricingSection";
 import FAQSection from "./_components/FAQSection";
 import InfrastructureSection from "./_components/InfrastructureSection";
 import { getAllCourses } from "@/app/data/course/get-all-courses";
-import Image from "next/image";
+import DemoPresentationImage from "./_components/DemoPresentationImage";
 
 export default async function Home() {
   const courses = await getAllCourses();
@@ -18,15 +18,8 @@ export default async function Home() {
       <Hero />
 
       <section className="pb-12 md:pb-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Image
-            alt="Unosend Dashboard"
-            width={1200}
-            height={800}
-            className="w-full h-auto"
-            src="/assets/images/heroimage.webp"
-            priority
-          />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <DemoPresentationImage />
         </div>
       </section>
 
